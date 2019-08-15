@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+
+import 'Item.dart';
+import 'dbhelper.dart';
 
 void main() => runApp(MyApp());
 
@@ -6,7 +10,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    debugPaintSizeEnabled = false;
+
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
@@ -43,69 +50,179 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+var itemData = [
+  Item(name: '哒哒哒', num: 1900, dateTime: DateTime.now()),
+  Item(name: '啦啦啦', num: 32432, dateTime: DateTime.now()),
+  Item(name: 'find bus', num: 342, dateTime: DateTime.now()),
+  Item(name: 'find bus', num: 3245, dateTime: DateTime.now()),
+  Item(name: 'jiebei', num: 5678, dateTime: DateTime.now()),
+  Item(name: 'jiebei', num: 2435, dateTime: DateTime.now()),
+  Item(name: 'jiebei', num: 7645, dateTime: DateTime.now()),
+  Item(name: 'jiebei', num: 342, dateTime: DateTime.now()),
+  Item(name: 'jiebei', num: 3425, dateTime: DateTime.now()),
+  Item(name: 'jiebei', num: 1000, dateTime: DateTime.now()),
+  Item(name: '65467', num: 100, dateTime: DateTime.now()),
+  Item(name: 'huabei', num: 1900, dateTime: DateTime.now()),
+  Item(name: 'xiaomi', num: 3400, dateTime: DateTime.now()),
+];
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _MyHomePageState extends State<MyHomePage> {
+  double total = 10000;
+  List<Item> items;
+
+  int _pageIndex = 0;
+  var _pageController = new PageController();
+  List<Widget> pages;
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    setListItems(itemData);
+    setPageItems();
+
+    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
+        title: Text(
+          'empty wallet',
+          style: TextStyle(color: Colors.black),
         ),
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Colors.white,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      backgroundColor: Colors.white,
+      body: new PageView.builder(
+          onPageChanged: _onPageChange,
+          controller: _pageController,
+          physics: BouncingScrollPhysics(),
+          itemCount: pages.length,
+          itemBuilder: (BuildContext context, int index) {
+            return pages[index];
+          }),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.yellow[300],
+        items: [
+          BottomNavigationBarItem(
+              icon: IconButton(
+                  icon: Icon(
+                    Icons.list,
+                    size: 34,
+                  ),
+                  onPressed: null),
+              title: Text('detail')),
+          BottomNavigationBarItem(
+              icon: IconButton(
+                  icon: Icon(
+                    Icons.dashboard,
+                    size: 34,
+                  ),
+                  onPressed: null),
+              title: Text('stastics')),
+        ],
+        onTap: _onTap,
+        currentIndex: _pageIndex,
+      ),
     );
+  }
+
+  void _onTap(int index) {
+    _pageController.animateToPage(index,
+        duration: const Duration(microseconds: 1000), curve: Curves.ease);
+  }
+
+  void _onPageChange(int index) {
+    setState(() {
+      if (_pageIndex != index) {
+        _pageIndex = index;
+      }
+    });
+  }
+
+  ///set list data
+  void setListItems(List<Item> list) {
+    setState(() {
+      this.items = list;
+
+      var tempTotal = 0.0;
+      for (var s in list) {
+        tempTotal = tempTotal + s.num;
+      }
+      this.total = tempTotal;
+    });
+  }
+
+  ///set page data
+  void setPageItems() {
+    setState(() {
+      this.pages = [listPage(), statisticPage()];
+    });
+  }
+
+  ///list page
+  Widget listPage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: EdgeInsets.all(8),
+          child: Text("Total: ￥$total"),
+        ),
+        Expanded(
+            child: ListView.builder(
+                itemCount: this.items.length,
+                physics: BouncingScrollPhysics(),
+                scrollDirection: Axis.vertical,
+                itemBuilder: (BuildContext context, int index) {
+                  return getListTile(index);
+                }))
+      ],
+    );
+  }
+
+  ///statistic page
+  Widget statisticPage() {
+    return Text('statistic page');
+  }
+
+  ///list item in list page
+  Widget getListTile(int index) {
+    return Container(
+      height: 100,
+        padding: EdgeInsets.all(10),
+        margin: EdgeInsets.all(10),
+        decoration: BoxDecoration(boxShadow: [
+          BoxShadow(blurRadius: 3, spreadRadius: 4, color: Colors.black12)
+        ], color: Colors.white, borderRadius: BorderRadius.circular(8)),
+        child: Padding(
+          padding: EdgeInsets.all(10),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  this.items[index].name,
+                  style: TextStyle(fontSize: 30),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  this.items[index].num.toString(),
+                  style: TextStyle(fontSize: 30),
+                  textAlign: TextAlign.center,
+                ),
+                flex: 2,
+              ),
+              Expanded(
+                child: Text(
+                  this.items[index].dateTime.year.toString() +
+                      "-" +
+                      this.items[index].dateTime.month.toString() +
+                      "-" +
+                      this.items[index].dateTime.day.toString(),
+                  style: TextStyle(fontSize: 20),
+                ),
+              )
+            ],
+          ),
+        ));
   }
 }
