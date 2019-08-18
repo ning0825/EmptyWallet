@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'addNewItemPage.dart';
+import 'dbhelper.dart';
 
 import 'Item.dart';
-import 'dbhelper.dart';
 
 void main() => runApp(MyApp());
 
@@ -11,6 +13,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     debugPaintSizeEnabled = false;
+
+    //init database
+    openDB();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -51,20 +56,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 var itemData = [
-  Item(name: '哒哒哒', num: 1900, dateTime: DateTime.now()),
-  Item(name: '啦啦啦', num: 32432, dateTime: DateTime.now()),
-  Item(name: 'find bus', num: 342, dateTime: DateTime.now()),
-  Item(name: 'find bus', num: 3245, dateTime: DateTime.now()),
-  Item(name: 'jiebei', num: 5678, dateTime: DateTime.now()),
-  Item(name: 'jiebei', num: 2435, dateTime: DateTime.now()),
-  Item(name: 'jiebei', num: 7645, dateTime: DateTime.now()),
-  Item(name: 'jiebei', num: 342, dateTime: DateTime.now()),
-  Item(name: 'jiebei', num: 3425, dateTime: DateTime.now()),
-  Item(name: 'jiebei', num: 1000, dateTime: DateTime.now()),
-  Item(name: '65467', num: 100, dateTime: DateTime.now()),
-  Item(name: 'huabei', num: 1900, dateTime: DateTime.now()),
-  Item(name: 'xiaomi', num: 3400, dateTime: DateTime.now()),
+  Item(name: '信用卡', num: 2400, dateTime: "2019-8-15"),
+  Item(name: '众享金', num: 1000, dateTime: "2019-8-15"),
+  Item(name: '花呗', num: 300, dateTime: "2019-8-15"),
+  Item(name: '分期乐', num: 8000, dateTime: "2019-8-15"),
+  Item(name: '小米金融', num: 4000, dateTime: "2019-8-15"),
+  Item(name: '爱学贷', num: 8000, dateTime: "2019-8-15"),
+  Item(name: '京东金融', num: 5400, dateTime: "2019-8-15"),
+  Item(name: '借呗', num: 1500, dateTime: "2019-8-15"),
 ];
+
+String getNowDataString() {
+  return DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
+}
 
 class _MyHomePageState extends State<MyHomePage> {
   double total = 10000;
@@ -122,7 +130,12 @@ class _MyHomePageState extends State<MyHomePage> {
         onTap: _onTap,
         currentIndex: _pageIndex,
       ),
+      floatingActionButton: FloatingActionButton(onPressed: () => addNewItem()),
     );
+  }
+
+  void addNewItem() {
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => AddNewItemPage()));
   }
 
   void _onTap(int index) {
@@ -179,15 +192,72 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  String db2string = '';
+
+  void printItems() async {
+    StringBuffer dbString = StringBuffer('');
+    final s = await getDebts();
+    for (var i in s) {
+      dbString.writeln(i.name +
+          "-" +
+          i.num.toString() +
+          "-" +
+          i.fen.toString() +
+          "-" +
+          i.dateTime);
+    }
+    setState(() {
+      db2string = dbString.toString();
+    });
+  }
+
+  void delDebt() {
+    for(int i = 0; i < 40; i++) {
+      delById(i);
+    }
+  }
+
   ///statistic page
   Widget statisticPage() {
-    return Text('statistic page');
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            MaterialButton(
+              onPressed: () => insertDebt(itemData[0]),
+              child: Text('insert'),
+              color: Colors.yellow,
+            ),
+            MaterialButton(
+              onPressed: () => delDebt(),
+              child: Text('del'),
+              color: Colors.red,
+            ),
+            MaterialButton(
+              onPressed: () => printItems(),
+              child: Text('change'),
+              color: Colors.blue,
+            ),
+            MaterialButton(
+              onPressed: () => printItems(),
+              child: Text('get'),
+              color: Colors.green,
+            ),
+          ],
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+        ),
+        Expanded(
+            child: SingleChildScrollView(
+                scrollDirection: Axis.vertical, child: Text(db2string)))
+      ],
+    );
   }
 
   ///list item in list page
   Widget getListTile(int index) {
     return Container(
-      height: 100,
+        height: 100,
         padding: EdgeInsets.all(10),
         margin: EdgeInsets.all(10),
         decoration: BoxDecoration(boxShadow: [
@@ -200,25 +270,22 @@ class _MyHomePageState extends State<MyHomePage> {
               Expanded(
                 child: Text(
                   this.items[index].name,
-                  style: TextStyle(fontSize: 30),
+                  style: TextStyle(fontSize: 20),
                 ),
               ),
               Expanded(
                 child: Text(
                   this.items[index].num.toString(),
                   style: TextStyle(fontSize: 30),
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.start,
                 ),
-                flex: 2,
+                flex: 1,
               ),
               Expanded(
                 child: Text(
-                  this.items[index].dateTime.year.toString() +
-                      "-" +
-                      this.items[index].dateTime.month.toString() +
-                      "-" +
-                      this.items[index].dateTime.day.toString(),
+                  this.items[index].dateTime,
                   style: TextStyle(fontSize: 20),
+                  textAlign: TextAlign.end,
                 ),
               )
             ],
