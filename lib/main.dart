@@ -1,3 +1,4 @@
+import 'package:empty_wallet/newMain.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -6,7 +7,7 @@ import 'dbhelper.dart';
 
 import 'Item.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(NewApp());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -135,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void addNewItem() {
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => AddNewItemPage()));
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => NewApp()));
   }
 
   void _onTap(int index) {
