@@ -56,7 +56,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 var itemData = [
-  Item(name: '信用卡', num: 2400, dateTime: "2019-8-15"),
+  Item(name: '信用卡', num: 2000, dateTime: "2019-8-15"),
   Item(name: '众享金', num: 1000, dateTime: "2019-8-15"),
   Item(name: '花呗', num: 300, dateTime: "2019-8-15"),
   Item(name: '分期乐', num: 8000, dateTime: "2019-8-15"),
