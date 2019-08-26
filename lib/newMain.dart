@@ -28,30 +28,23 @@ class NewHome extends StatefulWidget {
 
 class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   var currentPage = 0.0;
+  var currentCardPosition = 0;
 
   var cards = [oweCard(), loanCard()];
 
   AnimationController _animationController;
-  AnimationController _animationController2;
   Animation<double> showAnimation;
-  Animation<double> hideAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
+        AnimationController(vsync: this, duration: Duration(milliseconds: 780));
     showAnimation = Tween(begin: 0.0, end: 1.0).animate(_animationController);
     showAnimation.addListener(() {
       setState(() {});
     });
-
-    _animationController2 =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
-    hideAnimation = Tween(begin: 0.0, end: 1.0).animate(_animationController2);
-    hideAnimation.addListener(() {
-      setState(() {});
-    });
+    _animationController.forward(from: 0.0);
   }
 
   @override
@@ -101,9 +94,10 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                 ),
               )),
           Expanded(
+              child: SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
             child: Container(
               width: double.infinity,
-              height: 50,
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(40),
@@ -126,6 +120,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                     height: 300,
                     child: PageView.builder(
                         itemBuilder: (BuildContext context, int position) {
+                          developer.log('$position');
                           if (position == currentPage) {
                             return cards[position];
                           } else {
@@ -139,14 +134,8 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                         physics: BouncingScrollPhysics(),
                         controller: _controller,
                         onPageChanged: (index) {
-                          developer.log('animation exec');
-                          if (index == 0) {
-                            _animationController.forward(from: 0.0);
-                            _animationController2.reverse(from: 1.0);
-                          } else if (index == 1) {
-                            _animationController2.forward(from: 0.0);
-                            _animationController.reverse(from: 1.0);
-                          }
+                          currentCardPosition = index;
+                          _animationController.forward(from: 0.0);
                         }),
                   ),
                   Padding(
@@ -157,40 +146,45 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                           TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  Expanded(
-                    child: currentPage == 0
-                        ? FadeTransition(
-                            child: ListView.builder(
-                                itemBuilder: (context, index) {
-                                  return listTileWidget(index);
-                                },
-                                itemCount: 10),
-                            opacity: showAnimation,
-                          )
-                        : FadeTransition(
-                            child: ListView.builder(
-                                itemBuilder: (context, index) {
-                                  return ListTile(title: Text('$index'),);
-                                },
-                                itemCount: 10),
-                            opacity: hideAnimation,
-                          ),
-                  )
+                  getCurrentList(currentCardPosition)
                 ],
               ),
             ),
-          )
+          ))
         ],
       ),
       backgroundColor: Colors.black,
     );
   }
 
-  void changeListOpacity(index) {
-    _animationController.forward();
+  Widget getCurrentList(int index) {
+    if (index == 0) {
+      return FadeTransition(
+        child: ListView.builder(
+            primary: false,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              return oweTileWidget(index);
+            },
+            itemCount: 10),
+        opacity: showAnimation,
+      );
+    } else if (index != 0) {
+      return FadeTransition(
+        child: ListView.builder(
+            primary: false,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              return loanTileWidget(index);
+            },
+            itemCount: 10),
+        opacity: showAnimation,
+      );
+    }
+    return Text('index != neither 0 nor 1 ');
   }
 
-  Widget listTileWidget(int index) {
+  Widget oweTileWidget(int index) {
     return Padding(
       padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
       child: Row(
@@ -223,75 +217,94 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     );
   }
 
-  static Widget oweCard() {
+  Widget loanTileWidget(int index) {
     return Padding(
-      padding: EdgeInsets.only(top: 40, bottom: 40),
-      child: Container(
-        padding: EdgeInsets.all(40),
-        width: double.infinity,
-        height: 280,
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(30)),
-            boxShadow: [
-              BoxShadow(
-                  spreadRadius: 0, blurRadius: 30, color: Colors.grey[400])
+      padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                '信用卡',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('10-04'),
+              )
             ],
-            image: DecorationImage(
-                image: AssetImage('assets/CardBG.webp'), fit: BoxFit.fill)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              '本月需还:',
-              style: TextStyle(color: Colors.white),
+          ),
+          Spacer(),
+          IconButton(
+            icon: Icon(
+              Icons.insert_emoticon,
+              size: 30,
             ),
-            Text(
-              '已       还:',
-              style: TextStyle(color: Colors.white),
-            ),
-            Text(
-              '未       还:',
-              style: TextStyle(color: Colors.white),
-            )
-          ],
-        ),
+            onPressed: null,
+            padding: EdgeInsets.all(2),
+          )
+        ],
       ),
     );
   }
 
-  static Widget loanCard() {
-    return Padding(
-      padding: EdgeInsets.only(top: 40, bottom: 40),
-      child: Container(
-        padding: EdgeInsets.all(40),
-        width: double.infinity,
-        height: 280,
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(30)),
-            boxShadow: [
-              BoxShadow(
-                  spreadRadius: 0, blurRadius: 12, color: Colors.grey[400])
-            ],
-            image: DecorationImage(
-                image: AssetImage('assets/CardBG.webp'), fit: BoxFit.fill)),
+  static Widget oweCard() {
+    return BaseCard(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              '本月需借:',
-              style: TextStyle(color: Colors.white),
-            ),
-            Text(
-              '已       借:',
-              style: TextStyle(color: Colors.white),
-            ),
-            Text(
-              '未       借:',
-              style: TextStyle(color: Colors.white),
-            )
-          ],
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          '本月需还:',
+          style: TextStyle(color: Colors.white),
         ),
+        Text(
+          '￥2,300',
+          style: TextStyle(color: Colors.white, fontSize: 50),
+        ),
+      ],
+    ));
+  }
+
+  static Widget loanCard() {
+    return BaseCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '本月需借:',
+            style: TextStyle(color: Colors.white),
+          ),
+          Text(
+            '已       借:',
+            style: TextStyle(color: Colors.white),
+          ),
+          Text(
+            '未       借:',
+            style: TextStyle(color: Colors.white),
+          )
+        ],
       ),
     );
   }
+}
+
+class BaseCard extends Container {
+  final Widget child;
+
+  BaseCard({this.child})
+      : super(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(30)),
+                boxShadow: [
+                  BoxShadow(
+                      spreadRadius: 0, blurRadius: 12, color: Colors.grey[400])
+                ],
+                image: DecorationImage(
+                    image: AssetImage('assets/CardBG.webp'), fit: BoxFit.fill)),
+            padding: EdgeInsets.all(40),
+            width: double.infinity,
+            margin:EdgeInsets.only(top: 20, left: 2, right: 2, bottom: 20),
+            height: 280);
 }
