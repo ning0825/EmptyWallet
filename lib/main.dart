@@ -8,7 +8,7 @@ import 'dbhelper.dart';
 import 'Item.dart';
 import 'dragTest.dart';
 
-void main() => runApp(DragApp());
+void main() => runApp(NewApp());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.

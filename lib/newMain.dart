@@ -35,6 +35,19 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   AnimationController _animationController;
   Animation<double> showAnimation;
 
+  //拖动相关
+  double _topDis = 0.0;
+  double _bottomDis = 800;
+  double _currentDis;
+  bool isExpanded = true;
+  double startY;
+  double endY;
+
+  AnimationController _controller1;
+  AnimationController _controller2;
+  CurvedAnimation _curvedAnimation;
+  CurvedAnimation _curvedAnimation2;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +58,29 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
       setState(() {});
     });
     _animationController.forward(from: 0.0);
+
+    //拖动相关
+    _controller1 = new AnimationController(
+        vsync: this, duration: Duration(milliseconds: 400));
+    _curvedAnimation =
+        new CurvedAnimation(parent: _controller1, curve: Curves.easeOut);
+    _curvedAnimation.addListener(() {
+      setState(() {
+        _topDis =
+            _currentDis + (600.0 - _currentDis).abs() * _curvedAnimation.value;
+      });
+    });
+
+    _controller2 = new AnimationController(
+        vsync: this, duration: Duration(milliseconds: 400));
+    _curvedAnimation2 =
+        new CurvedAnimation(parent: _controller2, curve: Curves.easeOut);
+    _curvedAnimation2.addListener(() {
+      setState(() {
+        _topDis =
+            _currentDis - (0.0 - _currentDis).abs() * _curvedAnimation2.value;
+      });
+    });
   }
 
   @override
@@ -94,62 +130,122 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                 ),
               )),
           Expanded(
-              child: SingleChildScrollView(
-            physics: BouncingScrollPhysics(),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(40),
-                      topRight: Radius.circular(40)),
-                  color: Colors.white),
-              margin: EdgeInsets.only(top: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(left: 40, top: 30),
-                    child: Text(
-                      'Cards',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                    ),
-                  ),
-                  Container(
-                    width: double.maxFinite,
-                    height: 300,
-                    child: PageView.builder(
-                        itemBuilder: (BuildContext context, int position) {
-                          developer.log('$position');
-                          if (position == currentPage) {
-                            return cards[position];
-                          } else {
-                            return Transform.scale(
-                              scale: 1 - (currentPage - position).abs() * 0.1,
-                              child: cards[position],
-                            );
-                          }
-                        },
-                        itemCount: 2,
-                        physics: BouncingScrollPhysics(),
-                        controller: _controller,
-                        onPageChanged: (index) {
-                          currentCardPosition = index;
-                          _animationController.forward(from: 0.0);
-                        }),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 40, top: 10, bottom: 10),
-                    child: Text(
-                      'Transactions',
-                      style:
-                          TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  getCurrentList(currentCardPosition)
-                ],
+              child: Stack(
+            alignment: Alignment.center,
+            fit: StackFit.expand,
+            children: <Widget>[
+              Positioned(
+                child: Text(
+                  'this is back layer',
+                  style: TextStyle(color: Colors.white, fontSize: 50),
+                ),
               ),
-            ),
+              Positioned(
+                top: _topDis,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: GestureDetector(
+                  child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(40),
+                            topRight: Radius.circular(40)),
+                        color: Colors.white),
+                    width: double.maxFinite,
+                    child: NotificationListener<OverscrollNotification>(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Padding(
+                              padding: EdgeInsets.only(left: 40, top: 30),
+                              child: GestureDetector(
+                                child: Text(
+                                  'Cards',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 24),
+                                ),
+                                onTap: () {
+                                  _currentDis = _topDis;
+                                  _controller2.forward(from: 0.0);
+                                  isExpanded = !isExpanded;
+                                },
+                              ),
+                            ),
+                            Container(
+                              width: double.maxFinite,
+                              height: 300,
+                              child: PageView.builder(
+                                  itemBuilder:
+                                      (BuildContext context, int position) {
+                                    developer.log('$position');
+                                    if (position == currentPage) {
+                                      return cards[position];
+                                    } else {
+                                      return Transform.scale(
+                                        scale: 1 -
+                                            (currentPage - position).abs() *
+                                                0.1,
+                                        child: cards[position],
+                                      );
+                                    }
+                                  },
+                                  itemCount: 2,
+                                  physics: BouncingScrollPhysics(),
+                                  controller: _controller,
+                                  onPageChanged: (index) {
+                                    currentCardPosition = index;
+                                    _animationController.forward(from: 0.0);
+                                  }),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  left: 40, top: 10, bottom: 10),
+                              child: Text(
+                                'Transactions',
+                                style: TextStyle(
+                                    fontSize: 28, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            getCurrentList(currentCardPosition)
+                          ],
+                        ),
+                      ),
+                      onNotification: (OverscrollNotification notification) {
+                        if (isExpanded) {
+                          _currentDis = _topDis;
+                          _controller1.forward(from: 0.0);
+                          isExpanded = !isExpanded;
+                        }
+                        return false;
+                      },
+                    ),
+                  ),
+                  onVerticalDragStart: (e) {
+                    startY = 0.0;
+                    startY = e.globalPosition.dy;
+                  },
+                  onVerticalDragUpdate: (e) {
+                    endY = e.globalPosition.dy;
+                    setState(() {
+                      _topDis += e.delta.dy;
+                    });
+                  },
+                  onVerticalDragEnd: (e) {
+                    //解决点击时被识别为拖动
+                    if ((endY - startY).abs() > 20) {
+                      _currentDis = _topDis;
+                      isExpanded
+                          ? _controller1.forward(from: 0.0)
+                          : _controller2.forward(from: 0.0);
+                      isExpanded = !isExpanded;
+                    }
+                  },
+                ),
+              ),
+            ],
           ))
         ],
       ),
@@ -256,7 +352,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          '本月需还:',
+          '噫噫噫:',
           style: TextStyle(color: Colors.white),
         ),
         Text(
@@ -273,7 +369,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            '本月需借:',
+            '噫噫噫:',
             style: TextStyle(color: Colors.white),
           ),
           Text(
@@ -290,6 +386,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   }
 }
 
+//两张卡片只有child不同，故封装。
 class BaseCard extends Container {
   final Widget child;
 
@@ -304,7 +401,7 @@ class BaseCard extends Container {
                 image: DecorationImage(
                     image: AssetImage('assets/CardBG.webp'), fit: BoxFit.fill)),
             padding: EdgeInsets.all(40),
-            width: double.infinity,
-            margin:EdgeInsets.only(top: 20, left: 2, right: 2, bottom: 20),
+            width: 300,
+            margin: EdgeInsets.only(top: 20, left: 2, right: 2, bottom: 20),
             height: 280);
 }

@@ -24,6 +24,7 @@ class DragState extends State<DragHome> with TickerProviderStateMixin {
   double _currentDis;
   bool isExpanded = true;
   double startY;
+  double endY;
 
   AnimationController _controller;
   AnimationController _controller2;
@@ -42,7 +43,7 @@ class DragState extends State<DragHome> with TickerProviderStateMixin {
     _curvedAnimation.addListener(() {
       setState(() {
         _topDis =
-            _currentDis + (800 - _currentDis).abs() * _curvedAnimation.value;
+            _currentDis + (600.0 - _currentDis).abs() * _curvedAnimation.value;
       });
     });
 
@@ -53,7 +54,7 @@ class DragState extends State<DragHome> with TickerProviderStateMixin {
     _curvedAnimation2.addListener(() {
       setState(() {
         _topDis =
-            _currentDis - (200 - _currentDis).abs() * _curvedAnimation2.value;
+            _currentDis - (200.0 - _currentDis).abs() * _curvedAnimation2.value;
       });
     });
   }
@@ -107,15 +108,24 @@ class DragState extends State<DragHome> with TickerProviderStateMixin {
                 color: Colors.green,
               ),
               onVerticalDragStart: (e) {
+                startY = 0.0;
                 startY = e.globalPosition.dy;
               },
               onVerticalDragUpdate: (e) {
+                endY = e.globalPosition.dy;
                 setState(() {
                   _topDis += e.delta.dy;
                 });
               },
               onVerticalDragEnd: (e) {
-//                if(e.globalPosition.dy;)
+                //解决点击时被识别为拖动
+                if ((endY - startY).abs() > 20) {
+                  _currentDis = _topDis;
+                  isExpanded
+                      ? _controller.forward(from: 0.0)
+                      : _controller2.forward(from: 0.0);
+                  isExpanded = !isExpanded;
+                }
               },
             ),
           )
