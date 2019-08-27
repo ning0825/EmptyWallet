@@ -158,20 +158,45 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Padding(
-                              padding: EdgeInsets.only(left: 40, top: 30),
-                              child: GestureDetector(
-                                child: Text(
-                                  'Cards',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 24),
-                                ),
-                                onTap: () {
+                            GestureDetector(
+                              child: Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(40),
+                                        topRight: Radius.circular(40)),
+                                    color: Colors.white),
+                                alignment: Alignment.center,
+                                width: double.maxFinite,
+                                child: Image.asset('assets/line.png'),
+                              ),
+                              onVerticalDragStart: (e) {
+                                startY = 0.0;
+                                startY = e.globalPosition.dy;
+                              },
+                              onVerticalDragUpdate: (e) {
+                                endY = e.globalPosition.dy;
+                                setState(() {
+                                  _topDis += e.delta.dy;
+                                });
+                              },
+                              onVerticalDragEnd: (e) {
+                                //解决点击时被识别为拖动
+                                if ((endY - startY).abs() > 20) {
                                   _currentDis = _topDis;
-                                  _controller2.forward(from: 0.0);
+                                  isExpanded
+                                      ? _controller1.forward(from: 0.0)
+                                      : _controller2.forward(from: 0.0);
                                   isExpanded = !isExpanded;
-                                },
+                                }
+                              },
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(left: 40, top: 0),
+                              child: Text(
+                                'Cards',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 24),
                               ),
                             ),
                             Container(
@@ -214,11 +239,15 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                         ),
                       ),
                       onNotification: (OverscrollNotification notification) {
-                        if (isExpanded) {
-                          _currentDis = _topDis;
-                          _controller1.forward(from: 0.0);
-                          isExpanded = !isExpanded;
-                        }
+//                        if (isExpanded) {
+//                          _currentDis = _topDis;
+//                          _controller1.forward(from: 0.0);
+//                          isExpanded = !isExpanded;
+//                        }
+                        setState(() {
+                          _topDis += notification.dragDetails.delta.dy;
+                        });
+
                         return false;
                       },
                     ),
@@ -242,6 +271,11 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                           : _controller2.forward(from: 0.0);
                       isExpanded = !isExpanded;
                     }
+//                    if (isExpanded) {
+//                      _currentDis = _topDis;
+//                      _controller1.forward(from: 0.0);
+//                      isExpanded = !isExpanded;
+//                    }
                   },
                 ),
               ),
