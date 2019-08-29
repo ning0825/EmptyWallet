@@ -7,6 +7,7 @@ import 'dbhelper.dart';
 
 import 'Item.dart';
 import 'dragTest.dart';
+import 'hitTestTest.dart';
 
 void main() => runApp(NewApp());
 

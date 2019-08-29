@@ -42,9 +42,10 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   bool isExpanded = true;
   double startY;
   double endY;
+  bool isEdge = false;
 
-  AnimationController _controller1;
-  AnimationController _controller2;
+  AnimationController _toBottomController;
+  AnimationController _toTopController;
   CurvedAnimation _curvedAnimation;
   CurvedAnimation _curvedAnimation2;
 
@@ -59,22 +60,23 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     });
     _animationController.forward(from: 0.0);
 
-    //拖动相关
-    _controller1 = new AnimationController(
+    //controller1: 下划动画
+    _toBottomController = new AnimationController(
         vsync: this, duration: Duration(milliseconds: 400));
     _curvedAnimation =
-        new CurvedAnimation(parent: _controller1, curve: Curves.easeOut);
+        new CurvedAnimation(parent: _toBottomController, curve: Curves.easeOut);
     _curvedAnimation.addListener(() {
       setState(() {
         _topDis =
-            _currentDis + (600.0 - _currentDis).abs() * _curvedAnimation.value;
+            _currentDis + (500 - _currentDis).abs() * _curvedAnimation.value;
       });
     });
 
-    _controller2 = new AnimationController(
+    //上划动画
+    _toTopController = new AnimationController(
         vsync: this, duration: Duration(milliseconds: 400));
     _curvedAnimation2 =
-        new CurvedAnimation(parent: _controller2, curve: Curves.easeOut);
+        new CurvedAnimation(parent: _toTopController, curve: Curves.easeOut);
     _curvedAnimation2.addListener(() {
       setState(() {
         _topDis =
@@ -153,108 +155,117 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                             topRight: Radius.circular(40)),
                         color: Colors.white),
                     width: double.maxFinite,
-                    child: NotificationListener<OverscrollNotification>(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            GestureDetector(
-                              child: Container(
-                                padding: EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(40),
-                                        topRight: Radius.circular(40)),
-                                    color: Colors.white),
-                                alignment: Alignment.center,
-                                width: double.maxFinite,
-                                child: Image.asset('assets/line.png'),
-                              ),
-                              onVerticalDragStart: (e) {
-                                startY = 0.0;
-                                startY = e.globalPosition.dy;
-                              },
-                              onVerticalDragUpdate: (e) {
-                                endY = e.globalPosition.dy;
-                                setState(() {
-                                  _topDis += e.delta.dy;
-                                });
-                              },
-                              onVerticalDragEnd: (e) {
-                                //解决点击时被识别为拖动
-                                if ((endY - startY).abs() > 20) {
-                                  _currentDis = _topDis;
-                                  isExpanded
-                                      ? _controller1.forward(from: 0.0)
-                                      : _controller2.forward(from: 0.0);
-                                  isExpanded = !isExpanded;
-                                }
-                              },
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(left: 40, top: 0),
-                              child: Text(
-                                'Cards',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 24),
-                              ),
-                            ),
-                            Container(
-                              width: double.maxFinite,
-                              height: 300,
-                              child: PageView.builder(
-                                  itemBuilder:
-                                      (BuildContext context, int position) {
-                                    developer.log('$position');
-                                    if (position == currentPage) {
-                                      return cards[position];
-                                    } else {
-                                      return Transform.scale(
-                                        scale: 1 -
-                                            (currentPage - position).abs() *
-                                                0.1,
-                                        child: cards[position],
-                                      );
+                    child: NotificationListener<ScrollEndNotification> (
+                      child: NotificationListener<OverscrollNotification>(
+                        child: Theme(
+                          data: ThemeData(splashColor: Colors.red),
+                          child: SingleChildScrollView(controller: ScrollController(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                GestureDetector(
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    width: double.maxFinite,
+                                    child: Image.asset('assets/line.png'),
+                                  ),
+                                  behavior: HitTestBehavior.opaque,
+                                  onVerticalDragStart: (e) {
+                                    startY = 0.0;
+                                    startY = e.globalPosition.dy;
+                                  },
+                                  onVerticalDragUpdate: (e) {
+                                    endY = e.globalPosition.dy;
+                                    if(isExpanded) {
+                                      setState(() {
+                                        _topDis += e.delta.dy;
+                                      });
                                     }
                                   },
-                                  itemCount: 2,
-                                  physics: BouncingScrollPhysics(),
-                                  controller: _controller,
-                                  onPageChanged: (index) {
-                                    currentCardPosition = index;
-                                    _animationController.forward(from: 0.0);
-                                  }),
+                                  onVerticalDragEnd: (e) {
+                                    //解决点击时被识别为拖动
+                                    if (-(endY - startY) > 20) {
+                                      _currentDis = _topDis;
+                                      _toTopController.forward(from: 0.0);
+                                      isExpanded = !isExpanded;
+                                    }
+                                  },
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(left: 40, top: 0),
+                                  child: Text(
+                                    'Cards',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold, fontSize: 24),
+                                  ),
+                                ),
+                                Container(
+                                  width: double.maxFinite,
+                                  height: 300,
+                                  child: PageView.builder(
+                                      itemBuilder:
+                                          (BuildContext context, int position) {
+                                        if (position == currentPage) {
+                                          return cards[position];
+                                        } else {
+                                          return Transform.scale(
+                                            scale: 1 -
+                                                (currentPage - position).abs() *
+                                                    0.1,
+                                            child: cards[position],
+                                          );
+                                        }
+                                      },
+                                      itemCount: 2,
+                                      physics: BouncingScrollPhysics(),
+                                      controller: _controller,
+                                      onPageChanged: (index) {
+                                        currentCardPosition = index;
+                                        _animationController.forward(from: 0.0);
+                                      }),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                      left: 40, top: 10, bottom: 10),
+                                  child: Text(
+                                    'Transactions',
+                                    style: TextStyle(
+                                        fontSize: 28, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                getCurrentList(currentCardPosition),
+                              ],
                             ),
-                            Padding(
-                              padding: EdgeInsets.only(
-                                  left: 40, top: 10, bottom: 10),
-                              child: Text(
-                                'Transactions',
-                                style: TextStyle(
-                                    fontSize: 28, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            getCurrentList(currentCardPosition)
-                          ],
+                          ),
                         ),
+                        onNotification: (OverscrollNotification notification) {
+                          isEdge = true;
+                          if(isExpanded) {
+                            setState(() {
+                              _topDis += notification.dragDetails.delta.dy;
+                            });
+                          }
+                          return false;
+                        },
                       ),
-                      onNotification: (OverscrollNotification notification) {
-//                        if (isExpanded) {
-//                          _currentDis = _topDis;
-//                          _controller1.forward(from: 0.0);
-//                          isExpanded = !isExpanded;
-//                        }
-                        setState(() {
-                          _topDis += notification.dragDetails.delta.dy;
-                        });
-
+                      onNotification: (ScrollEndNotification notification) {
+                        developer.log('SCROLL END');
+                        double currentExtent = notification.metrics.pixels;
+                        double maxExtent = notification.metrics.maxScrollExtent;
+                        if(isExpanded && isEdge && ((maxExtent - currentExtent)> 200)) {
+                          _currentDis = _topDis;
+                          _toBottomController.forward(from: 0.0);
+                          isExpanded = false;
+                          isEdge = false;
+                        }
                         return false;
                       },
-                    ),
+                    )
                   ),
                   onVerticalDragStart: (e) {
                     startY = 0.0;
                     startY = e.globalPosition.dy;
+                    developer.log('vertical drag START');
                   },
                   onVerticalDragUpdate: (e) {
                     endY = e.globalPosition.dy;
@@ -264,19 +275,13 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                   },
                   onVerticalDragEnd: (e) {
                     //解决点击时被识别为拖动
-                    if ((endY - startY).abs() > 20) {
+                    developer.log('vertical drag END');
+                    if (-(endY - startY) > 20) {
                       _currentDis = _topDis;
-                      isExpanded
-                          ? _controller1.forward(from: 0.0)
-                          : _controller2.forward(from: 0.0);
+                      _toBottomController.forward(from: 0.0);
                       isExpanded = !isExpanded;
                     }
-//                    if (isExpanded) {
-//                      _currentDis = _topDis;
-//                      _controller1.forward(from: 0.0);
-//                      isExpanded = !isExpanded;
-//                    }
-                  },
+                  }
                 ),
               ),
             ],
