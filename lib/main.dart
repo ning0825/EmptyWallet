@@ -1,289 +1,557 @@
-import 'package:empty_wallet/newMain.dart';
+import 'dart:developer' as developer;
+
+import 'package:empty_wallet/db/Item.dart';
+import 'package:empty_wallet/db/dbhelper.dart';
+import 'package:empty_wallet/routes/platformDetailRoute.dart';
+import 'package:empty_wallet/ui/cus_ui.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'addNewItemPage.dart';
-import 'dbhelper.dart';
 
-import 'Item.dart';
-import 'dragTest.dart';
-import 'hitTestTest.dart';
+import 'routes/editItemRoute.dart';
 
 void main() => runApp(NewApp());
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class NewApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     debugPaintSizeEnabled = false;
 
-    //init database
     openDB();
 
+    //程序第一次运行时在monthTable中插入36个月，最长贷款应该就是36月了
     return MaterialApp(
+      home: NewHome(),
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      debugShowMaterialGrid: false,
+      routes: <String, WidgetBuilder>{
+        '/edit': (BuildContext context) => EditItemRoute(),
+      },
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+class NewHome extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return NewHomeState();
+  }
+}
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
+  var currentPage = 0.0;
+  var currentCardPosition = 0;
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+  var cards = [oweCard(), loanCard()];
 
-  final String title;
+  AnimationController _animationController;
+  Animation<double> showAnimation;
+
+  GlobalKey key = GlobalKey();
+
+  //拖动相关
+  double _topDis = 0.0;
+  double _bottomDis = 600;
+  double _currentDis;
+  bool isExpanded = true;
+  double startY;
+  double endY;
+  bool isEdge = false;
+
+  AnimationController _toBottomController;
+  AnimationController _toTopController;
+  CurvedAnimation _curvedAnimation;
+  CurvedAnimation _curvedAnimation2;
+
+  var _controller = PageController(viewportFraction: 0.85);
+
+  List<SubPlatform> subPlatforms = List();
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 780));
+    showAnimation = Tween(begin: 0.0, end: 1.0).animate(_animationController);
+    showAnimation.addListener(() {
+      setState(() {});
+    });
+    _animationController.forward(from: 0.0);
 
-var itemData = [
-  Item(name: '信用卡', num: 2000, dateTime: "2019-8-15"),
-  Item(name: '众享金', num: 1000, dateTime: "2019-8-15"),
-  Item(name: '花呗', num: 300, dateTime: "2019-8-15"),
-  Item(name: '分期乐', num: 8000, dateTime: "2019-8-15"),
-  Item(name: '小米金融', num: 4000, dateTime: "2019-8-15"),
-  Item(name: '爱学贷', num: 8000, dateTime: "2019-8-15"),
-  Item(name: '京东金融', num: 5400, dateTime: "2019-8-15"),
-  Item(name: '借呗', num: 1500, dateTime: "2019-8-15"),
-];
+    //controller1: 下划动画
+    _toBottomController = new AnimationController(
+        vsync: this, duration: Duration(milliseconds: 400));
+    _curvedAnimation =
+        new CurvedAnimation(parent: _toBottomController, curve: Curves.easeOut);
+    _curvedAnimation.addListener(() {
+      setState(() {
+        _topDis = _currentDis +
+            (_bottomDis - _currentDis).abs() * _curvedAnimation.value;
+      });
+    });
 
-String getNowDataString() {
-  return DateTime.now().year.toString() +
-      "-" +
-      DateTime.now().month.toString() +
-      "-" +
-      DateTime.now().day.toString();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  double total = 10000;
-  List<Item> items;
-
-  int _pageIndex = 0;
-  var _pageController = new PageController();
-  List<Widget> pages;
+    //上划动画
+    _toTopController = new AnimationController(
+        vsync: this, duration: Duration(milliseconds: 400));
+    _curvedAnimation2 =
+        new CurvedAnimation(parent: _toTopController, curve: Curves.easeOut);
+    _curvedAnimation2.addListener(() {
+      setState(() {
+        _topDis = _currentDis - _currentDis.abs() * _curvedAnimation2.value;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    setListItems(itemData);
-    setPageItems();
-
-    // TODO: implement build
+    getSubPlatforms(); //todo 写在build里会执行两次，写在initState里，从detail界面返回不能自动刷新
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'empty wallet',
-          style: TextStyle(color: Colors.black),
-        ),
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.white,
-      ),
-      backgroundColor: Colors.white,
-      body: new PageView.builder(
-          onPageChanged: _onPageChange,
-          controller: _pageController,
-          physics: BouncingScrollPhysics(),
-          itemCount: pages.length,
-          itemBuilder: (BuildContext context, int index) {
-            return pages[index];
-          }),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.yellow[300],
-        items: [
-          BottomNavigationBarItem(
-              icon: IconButton(
+      body: Column(
+        children: <Widget>[
+          Padding(
+              padding:
+                  EdgeInsets.only(top: 20, left: 30, right: 30, bottom: 20),
+              child: SafeArea(
+                  child: CusToolbar(
+                title: '-bank',
+                leftIcon: IconButton(
                   icon: Icon(
-                    Icons.list,
-                    size: 34,
+                    Icons.menu,
+                    color: Colors.white,
                   ),
-                  onPressed: null),
-              title: Text('detail')),
-          BottomNavigationBarItem(
-              icon: IconButton(
-                  icon: Icon(
-                    Icons.dashboard,
-                    size: 34,
+                  onPressed: () => {},
+                ),
+                rightIcon: IconButton(
+                    key: key,
+                    icon: Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      RenderBox renderBox =
+                          key.currentContext.findRenderObject();
+                      var offset = renderBox
+                          .localToGlobal(Offset(0.0, renderBox.size.height));
+                      var pop = _popupMenuButton();
+                      showMenu(
+                          context: context,
+                          position:
+                              RelativeRect.fromLTRB(offset.dx, offset.dy, 0, 0),
+                          items: pop.itemBuilder(context));
+                    }),
+              ))),
+          Expanded(
+              child: Stack(
+            alignment: Alignment.center,
+            fit: StackFit.expand,
+            children: <Widget>[
+              //back layer, show statistic data
+              Positioned(
+                  top: 2,
+                  height: 500,
+                  left: 0,
+                  width: MediaQuery.of(context).size.width,
+                  child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: BouncingScrollPhysics(),
+                      child: GestureDetector(
+                        child: CustomPaint(
+                          size: Size(1000, 500),
+                          painter: DataCurvePainter(),
+                        ),
+                        onTapDown: (TapDownDetails tdd) {
+                          developer.log(tdd.globalPosition.dy.toString());
+                        },
+                      ))),
+              //main layer
+              Positioned(
+                top: _topDis,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  child: SingleChildScrollView(
+                    child: getCardAndList(),
                   ),
-                  onPressed: null),
-              title: Text('stastics')),
+                ),
+              ),
+            ],
+          ))
         ],
-        onTap: _onTap,
-        currentIndex: _pageIndex,
       ),
-      floatingActionButton: FloatingActionButton(onPressed: () => addNewItem()),
+      backgroundColor: Colors.black,
     );
   }
 
-  void addNewItem() {
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => NewApp()));
-  }
-
-  void _onTap(int index) {
-    _pageController.animateToPage(index,
-        duration: const Duration(microseconds: 1000), curve: Curves.ease);
-  }
-
-  void _onPageChange(int index) {
-    setState(() {
-      if (_pageIndex != index) {
-        _pageIndex = index;
-      }
+  Future<void> getSubPlatforms() async {
+    var nowTime = DateTime.now();
+    var monthKey = nowTime.year.toString() + '.' + nowTime.month.toString();
+    subPlatforms = await getSubPlatformByMonth(monthKey).whenComplete(() {
+      setState(() {});
     });
   }
 
-  ///set list data
-  void setListItems(List<Item> list) {
-    setState(() {
-      this.items = list;
-
-      var tempTotal = 0.0;
-      for (var s in list) {
-        tempTotal = tempTotal + s.num;
-      }
-      this.total = tempTotal;
+  Widget getCardAndList() {
+    _controller.addListener(() {
+      setState(() {
+        currentPage = _controller.page;
+      });
     });
-  }
 
-  ///set page data
-  void setPageItems() {
-    setState(() {
-      this.pages = [listPage(), statisticPage()];
-    });
-  }
-
-  ///list page
-  Widget listPage() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        GestureDetector(
+          child: Container(
+            alignment: Alignment.center,
+            width: double.maxFinite,
+            height: 60,
+            child: Image.asset('assets/line.png'),
+          ),
+          behavior: HitTestBehavior.opaque,
+          onVerticalDragStart: (e) {
+            startY = 0.0;
+            startY = e.globalPosition.dy;
+          },
+          onVerticalDragUpdate: (e) {
+            endY = e.globalPosition.dy;
+            if (!isExpanded) {
+              setState(() {
+                _topDis += e.delta.dy;
+              });
+            }
+          },
+          onVerticalDragEnd: (e) {
+            //解决点击时被识别为拖动
+            if (-(endY - startY) > 20 && !isExpanded) {
+              _currentDis = _topDis;
+              _toTopController.forward(from: 0.0);
+              isExpanded = !isExpanded;
+            }
+          },
+        ),
         Padding(
-          padding: EdgeInsets.all(8),
-          child: Text("Total: ￥$total"),
+          padding: EdgeInsets.only(left: 40, top: 0),
+          child: Text(
+            'Cards',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+          ),
+        ),
+        Container(
+          width: double.maxFinite,
+          height: 300,
+          child: PageView.builder(
+              itemBuilder: (BuildContext context, int position) {
+                if (position == currentPage) {
+                  return cards[position];
+                } else {
+                  return Transform.scale(
+                    scale: 1 - (currentPage - position).abs() * 0.1,
+                    child: cards[position],
+                  );
+                }
+              },
+              itemCount: 2,
+              physics: BouncingScrollPhysics(),
+              controller: _controller,
+              onPageChanged: (index) {
+                currentCardPosition = index;
+                _animationController.forward(from: 0.0);
+              }),
+        ),
+        Padding(
+          padding: EdgeInsets.only(left: 40, top: 10, bottom: 10),
+          child: Text(
+            'Transactions',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
         ),
         Expanded(
-            child: ListView.builder(
-                itemCount: this.items.length,
-                physics: BouncingScrollPhysics(),
-                scrollDirection: Axis.vertical,
-                itemBuilder: (BuildContext context, int index) {
-                  return getListTile(index);
-                }))
+          child: getCurrentList(currentCardPosition),
+        )
       ],
     );
   }
 
-  String db2string = '';
-
-  void printItems() async {
-    StringBuffer dbString = StringBuffer('');
-    final s = await getDebts();
-    for (var i in s) {
-      dbString.writeln(i.name +
-          "-" +
-          i.num.toString() +
-          "-" +
-          i.fen.toString() +
-          "-" +
-          i.dateTime);
+  //显示是owe list 还是 Loan list
+  Widget getCurrentList(int index) {
+    if (index == 0) {
+      return FadeTransition(
+        child: ListView.builder(
+            primary: false,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              return oweTileWidget(index);
+            },
+            itemCount: subPlatforms.length),
+        opacity: showAnimation,
+      );
+    } else if (index != 0) {
+      return FadeTransition(
+        child: ListView.builder(
+            primary: false,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              return loanTileWidget(index);
+            },
+            itemCount: 10),
+        opacity: showAnimation,
+      );
     }
-    setState(() {
-      db2string = dbString.toString();
-    });
+    return Text('index != neither 0 nor 1 ');
   }
 
-  void delDebt() {
-    for(int i = 0; i < 40; i++) {
-      delById(i);
-    }
-  }
-
-  ///statistic page
-  Widget statisticPage() {
-    return Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            MaterialButton(
-              onPressed: () => insertDebt(itemData[0]),
-              child: Text('insert'),
-              color: Colors.yellow,
+  Widget oweTileWidget(int index) {
+    return Padding(
+      padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: GestureDetector(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      subPlatforms[index].platformKey,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(subPlatforms[index].numThisStage.toString()),
+                    )
+                  ],
+                ),
+                onTap: () => go2Detail(subPlatforms[index].platformKey)),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.all_inclusive,
+              size: 30,
             ),
-            MaterialButton(
-              onPressed: () => delDebt(),
-              child: Text('del'),
-              color: Colors.red,
-            ),
-            MaterialButton(
-              onPressed: () => printItems(),
-              child: Text('change'),
-              color: Colors.blue,
-            ),
-            MaterialButton(
-              onPressed: () => printItems(),
-              child: Text('get'),
-              color: Colors.green,
-            ),
-          ],
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.center,
-        ),
-        Expanded(
-            child: SingleChildScrollView(
-                scrollDirection: Axis.vertical, child: Text(db2string)))
-      ],
+            onPressed: null,
+            padding: EdgeInsets.all(2),
+          )
+        ],
+      ),
     );
   }
 
-  ///list item in list page
-  Widget getListTile(int index) {
-    return Container(
-        height: 100,
-        padding: EdgeInsets.all(10),
-        margin: EdgeInsets.all(10),
-        decoration: BoxDecoration(boxShadow: [
-          BoxShadow(blurRadius: 3, spreadRadius: 4, color: Colors.black12)
-        ], color: Colors.white, borderRadius: BorderRadius.circular(8)),
-        child: Padding(
-          padding: EdgeInsets.all(10),
-          child: Row(
+  Future<void> go2Detail(String name) async {
+    Platform pf = await getPf(name);
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => PlatformDetailRoute(pf)));
+  }
+
+  Widget loanTileWidget(int index) {
+    return Padding(
+      padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(
-                child: Text(
-                  this.items[index].name,
-                  style: TextStyle(fontSize: 20),
-                ),
+              Text(
+                '信用卡',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              Expanded(
-                child: Text(
-                  this.items[index].num.toString(),
-                  style: TextStyle(fontSize: 30),
-                  textAlign: TextAlign.start,
-                ),
-                flex: 1,
-              ),
-              Expanded(
-                child: Text(
-                  this.items[index].dateTime,
-                  style: TextStyle(fontSize: 20),
-                  textAlign: TextAlign.end,
-                ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('10-04'),
               )
             ],
           ),
-        ));
+          Spacer(),
+          IconButton(
+            icon: Icon(
+              Icons.insert_emoticon,
+              size: 30,
+            ),
+            onPressed: null,
+            padding: EdgeInsets.all(2),
+          )
+        ],
+      ),
+    );
   }
+
+  static Widget oweCard() {
+    return BaseCard(
+        child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          '噫噫噫:',
+          style: TextStyle(color: Colors.white),
+        ),
+        Text(
+          '￥2,300',
+          style: TextStyle(color: Colors.white, fontSize: 50),
+        ),
+      ],
+    ));
+  }
+
+  static Widget loanCard() {
+    return BaseCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '噫噫噫:',
+            style: TextStyle(color: Colors.white),
+          ),
+          Text(
+            '已       借:',
+            style: TextStyle(color: Colors.white),
+          ),
+          Text(
+            '未       借:',
+            style: TextStyle(color: Colors.white),
+          )
+        ],
+      ),
+    );
+  }
+
+  PopupMenuButton _popupMenuButton() {
+    return PopupMenuButton(
+      itemBuilder: (context) => <PopupMenuEntry>[
+        PopupMenuItem(
+          child: GestureDetector(
+            child: Text('add owe'),
+            onTap: () => Navigator.of(context)
+              ..pop()
+              ..pushNamed('/edit'),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class DataCurvePainter extends CustomPainter {
+  var dataArray = [1890, 1200, 2000, 2700, 1000, 2300, 3200, 2400, 1500];
+  var maxData = 0;
+  List<double> timeArrayAxis = List(9); //X轴坐标
+  List<double> dataArrayAxis = List(9); //Y轴坐标
+  List<Offset> offsetArray = List(9); //坐标数组
+
+  double dateHeight = 30.0; //空出显示日期的地方
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..color = Color.fromARGB(255, 255, 21, 119)
+      ..strokeWidth = 20
+      ..strokeCap = StrokeCap.round;
+
+    var pxPerTime = size.width / 10;
+    for (int i = 0; i < timeArrayAxis.length; i++) {
+      timeArrayAxis[i] = pxPerTime * (i + 1);
+    } //这里是X轴坐标
+
+    for (int j = 0; j < dataArray.length; j++) {
+      if (dataArray[j] > maxData) {
+        maxData = dataArray[j];
+      }
+    } //找出最大数值，确定纵坐标高度
+
+    var pxPerData = size.height / maxData;
+    for (int m = 0; m < dataArray.length; m++) {
+      dataArrayAxis[m] = size.height - dataArray[m] * pxPerData;
+    } //这里是Y轴坐标
+
+    for (int n = 0; n < timeArrayAxis.length; n++) {
+      var os = Offset(timeArrayAxis[n], dataArrayAxis[n]);
+      offsetArray[n] = os;
+    } //这里是坐标数组
+
+    Path curvePath = new Path();
+    for (int q = 0; q < timeArrayAxis.length - 1; q++) {
+      if (q == 0) {
+        curvePath.moveTo(offsetArray[q].dx, offsetArray[q].dy);
+      }
+      curvePath.cubicTo(
+          offsetArray[q].dx + 30,
+          offsetArray[q].dy,
+          offsetArray[q + 1].dx - 30,
+          offsetArray[q + 1].dy,
+          offsetArray[q + 1].dx,
+          offsetArray[q + 1].dy);
+    }
+
+    //画个渐变矩形
+    Offset offsetCenter = Offset(
+        (offsetArray[0].dx + offsetArray[offsetArray.length - 1].dx) / 2,
+        maxData * pxPerData / 2);
+    var curveWidth = pxPerTime * 8;
+    var curveHeight = offsetCenter.dy * 2;
+    var rectToDraw = Rect.fromCenter(
+        center: offsetCenter, width: curveWidth, height: curveHeight);
+    var shadowPaint = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..color = Color.fromARGB(255, 255, 21, 119)
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round;
+
+    shadowPaint.shader = LinearGradient(
+            colors: [Color.fromARGB(255, 255, 21, 119), Colors.transparent],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter)
+        .createShader(rectToDraw);
+    shadowPaint.style = PaintingStyle.fill;
+
+    var path = Path()
+      ..moveTo(offsetArray[8].dx, offsetArray[8].dy)
+      ..lineTo(offsetArray[8].dx, size.height)
+      ..lineTo(offsetArray[0].dx, size.height)
+      ..lineTo(offsetArray[0].dx, offsetArray[0].dy);
+    path.addPath(curvePath, Offset(0, 0));
+
+    path.close();
+    canvas.clipPath(path); //先clip，再draw
+
+    canvas.drawRect(rectToDraw, shadowPaint);
+    canvas.drawPath(curvePath, paint);
+
+    //todo 画字不显示
+    TextSpan span = TextSpan(
+        text: 'test', style: TextStyle(fontSize: 50, color: Colors.blue));
+    var textPainter = TextPainter(
+        text: span,
+        textAlign: TextAlign.left,
+        textDirection: TextDirection.rtl);
+    textPainter.layout(minWidth: 20, maxWidth: 100);
+    textPainter.paint(canvas, new Offset(200, 10));
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
+//两张卡片只有child不同，故封装。
+class BaseCard extends Container {
+  final Widget child;
+
+  BaseCard({this.child})
+      : super(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(30)),
+                boxShadow: [
+                  BoxShadow(
+                      spreadRadius: 0, blurRadius: 12, color: Colors.grey[400])
+                ],
+                image: DecorationImage(
+                    image: AssetImage('assets/CardBG.webp'), fit: BoxFit.fill)),
+            padding: EdgeInsets.all(40),
+            width: 300,
+            margin: EdgeInsets.only(top: 20, left: 2, right: 2, bottom: 20),
+            height: 280);
 }
