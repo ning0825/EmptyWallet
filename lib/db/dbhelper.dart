@@ -1,19 +1,24 @@
 import 'dart:async';
 import 'dart:core';
 import 'dart:io';
-
-import 'package:empty_wallet/db/Item.dart';
-import 'package:empty_wallet/db/Item.dart' as prefix0;
+import 'package:empty_wallet/db/item_bean.dart';
+import 'package:empty_wallet/db/item_bean.dart' as prefix0;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-
-import 'Item.dart';
+import 'item_bean.dart';
 
 var database;
 var dbName = "debt_database.db";
 
+const PLATFORM_TABLE_NAME = 'PlatformTable';
+const SUBPLATFORM_TABLE_NAME = 'SubPlatformTable';
+const ITEM_TABLE_NAME = 'ItemTable';
+const SUBITEM_TABLE_NAME = 'SubItemTable';
+const HUMANLOAN_TABLE_NAME = 'HumanLoanTable';
+const SUBHUMAN_TABLE_NAME = 'SubHumanTable';
+
 const CREATE_PLATFORM_TABLE = '''
-    CREATE TABLE PlatformTable(
+    CREATE TABLE $PLATFORM_TABLE_NAME(
           id INTEGER PRIMARY KEY,
           platformName TEXT,
           dueDate TEXT,
@@ -21,7 +26,7 @@ const CREATE_PLATFORM_TABLE = '''
     )
       ''';
 const CREATE_SUBPLATFORM_TABLE = '''
-    CREATE TABLE SubPlatformTable(
+    CREATE TABLE $SUBPLATFORM_TABLE_NAME(
           id INTEGER PRIMARY KEY,
           monthKey TEXT,
           platformKey TEXT,  
@@ -30,7 +35,7 @@ const CREATE_SUBPLATFORM_TABLE = '''
     )
     ''';
 const CREATE_ITEM_TABLE = '''
-    CREATE TABLE ItemTable(
+    CREATE TABLE $ITEM_TABLE_NAME(
           id INTEGER PRIMARY KEY,
           platformKey TEXT,
           itemName TEXT,
@@ -40,7 +45,7 @@ const CREATE_ITEM_TABLE = '''
     )
 ''';
 const CREATE_SUBITEM_TABLE = '''
-    CREATE TABLE SubItemTable(
+    CREATE TABLE $SUBITEM_TABLE_NAME(
           id INTEGER PRIMARY KEY,
           itemKey TEXT,
           monthKey TEXT,
@@ -48,9 +53,28 @@ const CREATE_SUBITEM_TABLE = '''
           currentStage INT
     )
     ''';
+const CREATE_HUMANLOAN_TABLE = '''
+    CREATE TABLE $HUMANLOAN_TABLE_NAME(
+           id INTEGER PRIMARY KEY,
+           hName TEXT,
+           hTotal REAL,
+           hPaid REAL,
+           hNotPaid REAL
+    )
+    ''';
+const CREATE_SUBHUMAN_TABLE = '''
+    CREATE TABLE $SUBHUMAN_TABLE_NAME(
+          id INTEGER PRIMARY KEY,
+          sName TEXT,
+          subNum REAL,
+          loanDate TEXT,
+          paymentMethod INT,
+          currentTotal REAL
+    )
+''';
 
 //Many app have one database and would never need to close it, it will be closed when the app is terminated.
-void openDB() async {
+Future<void>  openDB() async {
   var databasesPath = await getDatabasesPath();
   var path = join(databasesPath, dbName);
   // Make sure the directory exists
@@ -64,57 +88,82 @@ void openDB() async {
       db.execute(CREATE_SUBPLATFORM_TABLE);
       db.execute(CREATE_ITEM_TABLE);
       db.execute(CREATE_SUBITEM_TABLE);
+      db.execute(CREATE_HUMANLOAN_TABLE);
+      db.execute(CREATE_SUBHUMAN_TABLE);
     },
-    version: 1,
+    version: 2,
   );
 }
 
-/*
-* insert method*/
+//insert method.
 Future<int> insertDate(dynamic dn) async {
   final Database db = await database;
   return await db.insert(dn.runtimeType.toString() + 'Table', dn.toMap());
 }
 
-/*
-* get method*/
-Future<Platform> getPf(String name) async{
+//get humanloans.
+Future<List<HumanLoan>> getHls() async{
   final Database db = await database;
-  List<Map<String, dynamic>> maps = await db.query('PlatformTable', where: 'platformName = ?', whereArgs: [name]);
-  assert(maps.length < 2, 'map\' s length should not larger than 1');
+  List<Map<String, dynamic>> maps = await db.query('$HUMANLOAN_TABLE_NAME');
+  List<HumanLoan> list = [];
+  for (var o in maps) {
+    list.add(HumanLoan.mapTo(o));
+  }
+  return list;
+}
+
+//get subhuman by name.
+Future<List<SubHuman>> getSubHumanByName(String name) async{
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(SUBHUMAN_TABLE_NAME, where: 'sName = ?', whereArgs: [name]);
+  List<SubHuman> list = [];
+  for (var o in maps) {
+    list.add(SubHuman.mapTo(o));
+  }
+  return list;
+}
+
+//get human loan by name.
+Future<HumanLoan> getHlByName(String name) async{
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(HUMANLOAN_TABLE_NAME, where: 'hName = ?', whereArgs: [name]);
+  if(maps.length == 0) {
+    return null;
+  }
+  Map<String, dynamic> map = maps[0];
+  return prefix0.HumanLoan(id: map['id'], hName: map['hName'], hTotal: map['hTotal'], hPaid: map['hPaid'], hNotPaid: map['hNotPaid']);
+}
+
+//get platform by name.
+Future<Platform> getPlatformByName(String name) async{
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(PLATFORM_TABLE_NAME, where: 'platformName = ?', whereArgs: [name]);
+  print('getPf: maps.length: ' + maps.length.toString());
+  if(maps.length == 0) {
+    return null;
+  }
   Map<String, dynamic> map = maps[0];
   var pf = prefix0.Platform(id: map['id'], platformName: map['platformName'], dueDate: map['dueDate'], totalNum: map['totalNum']);
   return pf;
 }
 
+//delete specific item.
+//Future<void> delById(int id) async {
+//  final Database db = await database;
+//  await db.delete(ITEM_TABLE_NAME, where: "id = ?", whereArgs: [id]);
+//}
 
-/*
-* get method*/
-Future<List<String>> getItemsInMonth(String monthString) async {
-  final Database db = await database;
-  List<Map<String, dynamic>> maps = await db
-      .query('MonthTable', where: 'monthString = ?', whereArgs: [monthString]);
-  if (maps.length == 1) {
-    return maps[0]['monthString'].toString().split('.');
-  } else {
-    throw 'Map\'s length isn\'t 1, it\'s ' + maps.length.toString();
-  }
-}
+//update specific item.
+//Future<void> update(Item item) async {
+//  final Database db = await database;
+//  await db.update(ITEM_TABLE_NAME, item.toMap(),
+//      where: "name = ?", whereArgs: [item.itemName]);
+//}
 
-Future<void> delById(int id) async {
-  final Database db = await database;
-  await db.delete('ItemTable', where: "id = ?", whereArgs: [id]);
-}
-
-Future<void> update(Item item) async {
-  final Database db = await database;
-  await db.update('ItemTable', item.toMap(),
-      where: "name = ?", whereArgs: [item.itemName]);
-}
-
+//get subplatform.
 Future<SubPlatform> getSubPlatform(String platformName, String monthKey) async{
   final Database db = await database;
-  List<Map<String, dynamic>> maps = await db.query('SubPlatformTable', where: 'platformKey = ? and monthKey = ?', whereArgs: [platformName, monthKey]);
+  List<Map<String, dynamic>> maps = await db.query(SUBPLATFORM_TABLE_NAME, where: 'platformKey = ? and monthKey = ?', whereArgs: [platformName, monthKey]);
   assert(maps.length < 2, 'Error: The maps length should smaller than 2, check out database. Current length: ' + maps.length.toString());
   if (maps.length == 0) {
     var sp = SubPlatform(monthKey: monthKey, platformKey: platformName, numThisStage: 0);
@@ -125,9 +174,10 @@ Future<SubPlatform> getSubPlatform(String platformName, String monthKey) async{
   return SubPlatform.mapTo(maps[0]);
 }
 
-Future<List<SubPlatform>> getSubPlatformByMonth(String monthKey) async{
+//get subplatforms in month.
+Future<List<SubPlatform>> getSubPlatformsByMonth(String monthKey) async{
   final Database db = await database;
-  List<Map<String, dynamic>> maps = await db.query('SubPlatformTable', where: 'monthKey = ?', whereArgs: [monthKey]);
+  List<Map<String, dynamic>> maps = await db.query(SUBPLATFORM_TABLE_NAME, where: 'monthKey = ?', whereArgs: [monthKey]);
   List<SubPlatform> list = List();
   for (var o in maps) {
     list.add(SubPlatform.mapTo(o));
@@ -135,19 +185,28 @@ Future<List<SubPlatform>> getSubPlatformByMonth(String monthKey) async{
   return list;
 }
 
+//update specific subplatform.
 Future<void> updateSubPlatform(SubPlatform subPlatform) async {
   final Database db = await database;
-  await db.update('SubPlatformTable', subPlatform.toMap(), where: 'id = ?', whereArgs: [subPlatform.id]);
+  await db.update(SUBPLATFORM_TABLE_NAME, subPlatform.toMap(), where: 'id = ?', whereArgs: [subPlatform.id]);
 }
 
+//update specific platform.
 Future<void> updatePlatform(Platform platform) async{
   final Database db = await database;
-  await db.update('PlatformTable', platform.toMap(), where: 'id = ?', whereArgs: [platform.id]);
+  await db.update(PLATFORM_TABLE_NAME, platform.toMap(), where: 'id = ?', whereArgs: [platform.id]);
 }
 
-Future<List<Item>> getItem(String platformKey) async {
+//update human.
+Future<void> updateHuman(HumanLoan humanLoan) async{
   final Database db = await database;
-  List<Map<String, dynamic>> maps = await db.query('ItemTable', where: 'platformKey = ?', whereArgs: [platformKey]);
+  await db.update(HUMANLOAN_TABLE_NAME, humanLoan.toMap(), where: 'id = ?', whereArgs: [humanLoan.id]);
+}
+
+//get items in platform.
+Future<List<Item>> getItems(String platformKey) async {
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(ITEM_TABLE_NAME, where: 'platformKey = ?', whereArgs: [platformKey]);
   List<Item> items = List();
   for (var o in maps) {
     items.add(Item.mapTo(o));

@@ -19,11 +19,10 @@ class Platform {
   String dueDate;
   double totalNum;
 
-  Platform(
-      {@required this.platformName,
-      @required this.dueDate,
-      this.totalNum: 0.0,
-      this.id});
+  Platform({@required this.platformName,
+    @required this.dueDate,
+    this.totalNum = 0.0,
+    this.id});
 
   Map<String, dynamic> toMap() {
     return {
@@ -54,12 +53,11 @@ class SubPlatform {
   double numThisStage;
   int isPaidOff;
 
-  SubPlatform(
-      {this.id,
-      @required this.monthKey,
-      @required this.platformKey,
-      @required this.numThisStage,
-      this.isPaidOff: 0});
+  SubPlatform({this.id,
+    @required this.monthKey,
+    @required this.platformKey,
+    @required this.numThisStage,
+    this.isPaidOff = 0});
 
   Map<String, dynamic> toMap() {
     return {
@@ -93,13 +91,12 @@ class Item {
   String itemName;
   int paidStageNum;
 
-  Item(
-      {this.id,
-      @required this.platformKey,
-      @required this.stageNum,
-      @required this.numPerStage,
-      @required this.itemName,
-      this.paidStageNum: 0});
+  Item({this.id,
+    @required this.platformKey,
+    @required this.stageNum,
+    @required this.numPerStage,
+    @required this.itemName,
+    this.paidStageNum: 0});
 
   Map<String, dynamic> toMap() {
     return {
@@ -134,12 +131,11 @@ class SubItem {
   double numThisStage;
   int currentStage;
 
-  SubItem(
-      {this.id,
-      @required this.itemKey,
-      @required this.monthKey,
-      @required this.numThisStage,
-      @required this.currentStage});
+  SubItem({this.id,
+    @required this.itemKey,
+    @required this.monthKey,
+    @required this.numThisStage,
+    @required this.currentStage});
 
   Map<String, dynamic> toMap() {
     return {
@@ -163,4 +159,114 @@ class SubItem {
   String toString() {
     return 'SubPlatform Info: id:[$id], itemKey:[$itemKey], monthKey:[$monthKey], numThisStage:[$numThisStage], currentStage:[$currentStage]';
   }
+}
+
+class HumanLoan {
+  int id;
+  String hName;
+  double hTotal;
+  double hPaid;
+  double hNotPaid;
+
+  HumanLoan({
+    this.id,
+    @required this.hName,
+    @required this.hTotal,
+    this.hPaid = 0.0,
+    this.hNotPaid = 0.0
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'hName': hName,
+      'hTotal': hTotal,
+      'hPaid': hPaid,
+      'hNotPaid': hNotPaid
+    };
+  }
+
+  static HumanLoan mapTo(Map<String, dynamic> map) {
+    return HumanLoan(id: map['id'],
+        hName: map['hName'],
+        hTotal: map['hTotal'],
+        hPaid: map['hPaid'],
+        hNotPaid: map['hNotPaid']);
+  }
+
+  String toString() {
+    return 'HumanLoan Info: id:[$id], hName:[$hName], hTotal:[$hTotal], hPaid:[$hPaid], hNotPaid:[$hNotPaid]';
+  }
+}
+
+class SubHuman {
+  int id;
+  String sName;
+  double subNum;
+  String loanDate;
+  //0: wechat 1:zhifubao 2: cash(use this if forget)
+  int paymentMethod;
+  double currentTotal;
+
+  SubHuman({this.id, @required this.sName, @required this.subNum, @required this.loanDate, @required this.paymentMethod, @required this.currentTotal});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'sName': sName,
+      'subNum': subNum,
+      'loanDate': loanDate,
+      'paymentMethod': paymentMethod,
+      'currentTotal': currentTotal
+    };
+  }
+
+  static SubHuman mapTo(Map<String, dynamic> map) {
+    return SubHuman(sName: map['sName'], subNum: map['subNum'], loanDate: map['loanDate'], paymentMethod: map['paymentMethod'], currentTotal: map['currentTotal']);
+  }
+
+  String toString() {
+    return 'SubHuman Info: id: [$id], sName: [$sName], subNum: [$subNum], loanDate: [$loanDate], paymentMethod: [$paymentMethod], currentTotal: [$currentTotal]';
+  }
+}
+
+class PlatformDetail {
+  Platform pf;
+  SubPlatform spf;
+  List<Item> its;
+
+  PlatformDetail(this.pf, this.spf, this.its);
+
+  PlatformDetail.empty();
+}
+
+class ItemAddArgs {
+  Platform platform;
+  SubPlatform subPlatform;
+  int itemSN;//分期数
+  double itemNPS;
+
+  ItemAddArgs(this.platform, this.subPlatform, this.itemSN,
+      this.itemNPS); //每期数目
+
+  ItemAddArgs.empty();
+}
+
+class SubHumanAddArgs{
+  HumanLoan humanLoan;
+  List<SubHuman> subHumans;
+
+  SubHumanAddArgs({this.humanLoan, this.subHumans});
+
+  SubHumanAddArgs.empty();
+}
+
+class SubHumanAddArgs2{
+  HumanLoan humanLoan;
+  double num;
+  String date;
+  int payMethod;
+
+  SubHumanAddArgs2({this.humanLoan, this.num, this.date, this.payMethod});
+
+  SubHumanAddArgs2.empty();
 }
