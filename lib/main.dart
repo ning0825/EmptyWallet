@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:empty_wallet/bloc/bloc_human.dart';
+import 'package:empty_wallet/bloc/bloc_month.dart';
 import 'package:empty_wallet/bloc/bloc_subplatform.dart';
 import 'package:empty_wallet/db/item_bean.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
@@ -9,7 +10,6 @@ import 'package:empty_wallet/routes/platform_detail_route.dart';
 import 'package:empty_wallet/ui/bottom_drag.dart';
 import 'package:empty_wallet/ui/custom_ui.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,11 +19,9 @@ import 'ui/data_curve.dart';
 
 //提供一个context给platform_detail_route界面获取bloc用
 BuildContext mContext;
-
-//当前月的subPlatform列表
-List<SubPlatform> subPlatforms = List();
-//Human load list.
-List<HumanLoan> humanLoans = List();
+//
+//List<double> dataArray = [];
+//List<String> monthArray = [];
 
 void main() {
   //Bloc事件回调
@@ -37,14 +35,17 @@ class NewApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: BlocProvider<SubPlatformBloc>(
-        builder: (context) => SubPlatformBloc(),
+        builder: (_) => SubPlatformBloc(),
         child: BlocProvider<HumanBloc>(
-          builder: (context) => HumanBloc(),
-          child: NewHome(),
+          builder: (_) => HumanBloc(),
+          child: BlocProvider<MonthBloc>(
+            builder: (_) => MonthBloc(),
+            child: NewHome(),
+          ),
         ),
       ),
       routes: <String, WidgetBuilder>{
-        '/edit': (BuildContext context) => AddPlatformRoute(),
+        '/edit ': (BuildContext context) => AddPlatformRoute(),
       },
     );
   }
@@ -58,10 +59,16 @@ class NewHome extends StatefulWidget {
 }
 
 class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
+  //当前月的subPlatform列表
+  List<SubPlatform> subPlatforms = List();
+
+//Human load list.
+  List<HumanLoan> humanLoans = List();
+
+  var cards;
+
   var currentPage = 0.0;
   var currentCardPosition = 0;
-
-  var cards = [oweCard(), loanCard()];
 
   AnimationController _animationController;
   Animation<double> showAnimation;
@@ -76,20 +83,20 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    openDB().whenComplete(() => BlocProvider.of<HumanBloc>(context).add(HumanEvent(methodId: HumanEvent.SHOW_HUMAN_LOAN)));
+    openDB().whenComplete(() {
+      BlocProvider.of<HumanBloc>(context)
+          .add(HumanEvent(methodId: HumanEvent.SHOW_HUMAN_LOAN));
+      BlocProvider.of<SubPlatformBloc>(context)
+          .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
+      BlocProvider.of<MonthBloc>(context).add(MonthEvent.UPDATE_MONTH);
+    });
 
-    //显示主界面列表
     mContext = context;
-    BlocProvider.of<SubPlatformBloc>(context)
-        .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
 
     //列表逐渐显示的动画
     _animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 780));
     showAnimation = Tween(begin: 0.0, end: 1.0).animate(_animationController);
-    showAnimation.addListener(() {
-      setState(() {});
-    });
     _animationController.forward(from: 0.0);
   }
 
@@ -110,7 +117,9 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
               )),
           Expanded(
             child: MockBottomDrag(
-              bl: DataCurveWidget(),
+              bl: BlocBuilder<MonthBloc, MonthArgs>(builder: (context, s) {
+                return DataCurveWidget(s.dataList, s.monthList);
+              }),
               fl: Container(
                 key: flKey,
                 decoration: BoxDecoration(
@@ -137,95 +146,97 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
       });
     });
 
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Container(
-            alignment: Alignment.center,
-            width: double.maxFinite,
-            height: 60,
-            child: Image.asset('assets/line.png'),
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 40, right: 40),
-            child: Row(
+    return Center(child: BlocBuilder<SubPlatformBloc, List<SubPlatform>>(
+      builder: (context, s) {
+        subPlatforms = s;
+        return BlocBuilder<HumanBloc, List<HumanLoan>>(
+          builder: (context, s) {
+            humanLoans = s;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'Cards',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                Container(
+                  alignment: Alignment.center,
+                  width: double.maxFinite,
+                  height: 60,
+                  child: Image.asset('assets/line.png'),
                 ),
-              ],
-            ),
-          ),
-          Container(
-            width: double.maxFinite,
-            height: 300,
-            child: PageView.builder(
-                itemBuilder: (BuildContext context, int position) {
-                  if (position == currentPage) {
-                    return cards[position];
-                  } else {
-                    return Transform.scale(
-                      scale: 1 - (currentPage - position).abs() * 0.1,
-                      child: cards[position],
-                    );
-                  }
-                },
-                itemCount: 2,
-                physics: BouncingScrollPhysics(),
-                controller: _controller,
-                onPageChanged: (index) {
-                  currentCardPosition = index;
-                  _animationController.forward(from: 0.0);
-                }),
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 40),
-            child: Row(
-              children: <Widget>[
-                Text(
-                  'Transactions',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                Padding(
+                  padding: EdgeInsets.only(left: 40, right: 40),
+                  child: Row(
+                    children: <Widget>[
+                      Text(
+                        'Cards',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 24),
+                      ),
+                    ],
+                  ),
                 ),
-                Spacer(),
-                IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: () {
-                    if (currentCardPosition == 0) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => AddPlatformRoute()));
-                    } else if (currentCardPosition == 1) {
-                      print('$currentCardPosition');
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => AddHumanLoanRoute()));
-                    }
-                  },
-                )
+                Container(
+                  width: double.maxFinite,
+                  height: 300,
+                  child: PageView.builder(
+                      itemBuilder: (BuildContext context, int position) {
+                        cards = [oweCard(), loanCard()];
+                        if (position == currentPage) {
+                          return cards[position];
+                        } else {
+                          return Transform.scale(
+                            scale: 1 - (currentPage - position).abs() * 0.1,
+                            child: cards[position],
+                          );
+                        }
+                      },
+                      itemCount: 2,
+                      physics: BouncingScrollPhysics(),
+                      controller: _controller,
+                      onPageChanged: (index) {
+                        currentCardPosition = index;
+                        setState(() {});
+                        _animationController.forward(from: 0.0);
+                      }),
+                ),
+                Padding(
+                  padding:
+                      EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 40),
+                  child: Row(
+                    children: <Widget>[
+                      Text(
+                        'Transactions',
+                        style: TextStyle(
+                            fontSize: 28, fontWeight: FontWeight.bold),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.add),
+                        onPressed: () {
+                          if (currentCardPosition == 0) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AddPlatformRoute()));
+                          } else if (currentCardPosition == 1) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AddHumanLoanRoute()));
+                          }
+                        },
+                      )
+                    ],
+                  ),
+                ),
+                getCurrentList(currentCardPosition)
               ],
-            ),
-          ),
-          BlocBuilder<SubPlatformBloc, List<SubPlatform>>(
-            builder: (context, s) {
-              subPlatforms = s;
-              return BlocBuilder<HumanBloc, List<HumanLoan>>(
-                builder: (context, s) {
-                  humanLoans = s;
-                  return getCurrentList(currentCardPosition);
-                },
-              );
-            },
-          )
-        ],
-      ),
-    );
+            );
+          },
+        );
+      },
+    ));
   }
 
-  //显示是owe list 还是 Loan list
+//显示是owe list 还是 Loan list
   Widget getCurrentList(int index) {
     if (index == 0) {
       return FadeTransition(
@@ -253,7 +264,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     return Text('index != neither 0 nor 1 ');
   }
 
-  //列表【0】Item
+//列表【0】Item
   Widget oweTileWidget(int index) {
     return Padding(
       padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
@@ -272,12 +283,15 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text(subPlatforms[index].numThisStage.toString()),
+                      child: Text(subPlatforms[index].dateThisStage ?? 'test'),
                     )
                   ],
                 ),
                 behavior: HitTestBehavior.opaque,
                 onTap: () => go2Detail(subPlatforms[index].platformKey)),
+          ),
+          Expanded(
+            child: Text(subPlatforms[index].numThisStage.toString()),
           ),
           IconButton(
             icon: Icon(
@@ -292,7 +306,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     );
   }
 
-  //列表【1】Item
+//列表【1】Item
   Widget loanTileWidget(int index) {
     return Padding(
       padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
@@ -316,7 +330,11 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
               ),
               behavior: HitTestBehavior.opaque,
               onTap: () => {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => HumanDetailRoute(humanLoans[index])))
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            HumanDetailRoute(humanLoans[index])))
               },
             ),
           ),
@@ -333,8 +351,13 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     );
   }
 
-  //卡片【0】
-  static Widget oweCard() {
+//卡片【0】
+  Widget oweCard() {
+    var oweTotal = 0.0;
+    for (var o in subPlatforms) {
+      oweTotal += o.numThisStage;
+    }
+
     return BaseCard(
         child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,15 +368,20 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
         ),
         Container(height: 10),
         Text(
-          '\$' + ' 2,300',
+          '￥$oweTotal',
           style: TextStyle(color: Colors.white, fontSize: 50),
         ),
       ],
     ));
   }
 
-  //卡片【1】
-  static Widget loanCard() {
+//卡片【1】
+  Widget loanCard() {
+    var loanTotal = 0.0;
+    for (var o in humanLoans) {
+      loanTotal += o.hTotal;
+    }
+
     return BaseCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +392,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
           ),
           Container(height: 10),
           Text(
-            '\$ 12,400',
+            '￥$loanTotal',
             style: TextStyle(color: Colors.white, fontSize: 50),
           )
         ],
@@ -372,25 +400,25 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     );
   }
 
-  //点击进入详情界面
+//点击进入详情界面
   Future<void> go2Detail(String name) async {
     Platform pf = await getPlatformByName(name);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => PlatformDetailRoute(pf)));
   }
 
-  PopupMenuButton _popupMenuButton() {
-    return PopupMenuButton(
-      itemBuilder: (context) => <PopupMenuEntry>[
-        PopupMenuItem(
-          child: GestureDetector(
-            child: Text('add owe'),
-            onTap: () => Navigator.of(context)
-              ..pop() //隐藏popupMenu
-              ..push(MaterialPageRoute(builder: (context) => AddPlatformRoute())),
-          ),
-        )
-      ],
-    );
-  }
+//  PopupMenuButton _popupMenuButton() {
+//    return PopupMenuButton(
+//      itemBuilder: (context) => <PopupMenuEntry>[
+//        PopupMenuItem(
+//          child: GestureDetector(
+//            child: Text('add owe'),
+//            onTap: () => Navigator.of(context)
+//              ..pop() //隐藏popupMenu
+//              ..push(MaterialPageRoute(builder: (context) => AddPlatformRoute())),
+//          ),
+//        )
+//      ],
+//    );
+//  }
 }

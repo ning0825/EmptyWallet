@@ -76,11 +76,11 @@ class BaseCard extends Container {
 }
 
 class CusTextField extends StatelessWidget {
-  String title;
-  FormFieldSetter<String> onSaved;
-  FormFieldValidator validator;
-  String hintText;
-  TextInputType keyboardType;
+  final String title;
+  final FormFieldSetter<String> onSaved;
+  final FormFieldValidator validator;
+  final String hintText;
+  final TextInputType keyboardType;
 
 
   CusTextField({this.title, this.onSaved, this.validator, this.hintText, this.keyboardType});

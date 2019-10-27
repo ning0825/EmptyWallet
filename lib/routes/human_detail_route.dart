@@ -1,11 +1,8 @@
-import 'package:empty_wallet/bloc/bloc_human.dart';
 import 'package:empty_wallet/bloc/bloc_human_detail.dart';
-import 'package:empty_wallet/db/dbhelper.dart';
 import 'package:empty_wallet/db/item_bean.dart';
 import 'package:empty_wallet/ui/custom_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:empty_wallet/main.dart' as main;
 
 BuildContext mContext;
 
@@ -151,9 +148,5 @@ class _HumanDetailHomeState extends State<HumanDetailHome> {
               ],
               backgroundColor: Colors.redAccent,
             ));
-  }
-
-  Future<void> _saveSubHuman() async {
-
   }
 }

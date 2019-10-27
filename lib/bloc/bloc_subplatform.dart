@@ -10,6 +10,7 @@ class SubPlatformEvent {
 
   ///[eventId] An ID to distinguish different events. See full list above.
   int eventId;
+  //todo $data is unused, consider to remove.
   SubPlatform data;
 
   SubPlatformEvent({@required this.eventId, this.data});
@@ -22,6 +23,7 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
 
   @override
   Stream<List<SubPlatform>> mapEventToState(event) async* {
+    //todo condition judgment is not needed anymore if remove data above.
     if(event is SubPlatformEvent) {
       switch(event.eventId) {
         //show SubPlatforms.

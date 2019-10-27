@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:empty_wallet/bloc/bloc_month.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
 import 'package:empty_wallet/db/item_bean.dart';
 import 'package:empty_wallet/tool/utils.dart';
@@ -33,6 +34,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         yield await getPlatformDetail(event.itemAddArgs.platform);
         BlocProvider.of<SubPlatformBloc>(mContext)
             .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
+        BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
         break;
     }
   }
@@ -66,10 +68,20 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
           itemKey: itemTag,
           monthKey: s,
           numThisStage: iaas.itemNPS,
-          currentStage: i + 1)); //insert subItem
+          currentStage: i + 1));
+
+      //UpdateMonth
+      Month m = await getMonth(s);
+      if(m == null) {
+        insertDate(Month(month: s, monthTotal: iaas.itemNPS));
+      } else {
+        //m != null
+        m.monthTotal += iaas.itemNPS;
+        await updateMonth(m);
+      }
 
       //update subplatform
-      var sp = await getSubPlatform(iaas.platform.platformName, s);
+      var sp = await getSubPlatform(iaas.platform.platformName,  s);
       sp.numThisStage += iaas.itemNPS;
       updateSubPlatform(sp);
 

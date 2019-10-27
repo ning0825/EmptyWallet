@@ -1,17 +1,26 @@
 import 'dart:core';
 import 'package:flutter/material.dart';
 
-//
-//class MonthItem {
-//  String monthString;
-//  String itemsInMonth;
-//
-//  MonthItem({this.monthString, this.itemsInMonth});
-//
-//  Map<String, dynamic> toMap() {
-//    return {'monthString': monthString, 'ItemInMonth': itemsInMonth};
-//  }
-//}
+
+class Month {
+  int id;
+  String month;
+  double monthTotal;
+
+  Month({this.id, this.month, this.monthTotal});
+
+  Map<String, dynamic> toMap() {
+    return {'month': month, 'monthTotal': monthTotal};
+  }
+
+  static Month mapTo(Map<String, dynamic> map) {
+    return Month(id: map['id'], month: map['month'], monthTotal: map['monthTotal']);
+  }
+
+  String toString() {
+    return 'Month Info: id: [$id], month: [$month], monthTotal: [$monthTotal]';
+  }
+}
 
 class Platform {
   int id;
@@ -51,12 +60,14 @@ class SubPlatform {
   String monthKey;
   String platformKey;
   double numThisStage;
+  String dateThisStage;
   int isPaidOff;
 
   SubPlatform({this.id,
     @required this.monthKey,
     @required this.platformKey,
     @required this.numThisStage,
+    @required this.dateThisStage,
     this.isPaidOff = 0});
 
   Map<String, dynamic> toMap() {
@@ -64,6 +75,7 @@ class SubPlatform {
       'monthKey': monthKey,
       'platformKey': platformKey,
       'numThisStage': numThisStage,
+      'dateThisStage': dateThisStage,
       'isPaidOff': isPaidOff
     };
   }
@@ -74,12 +86,13 @@ class SubPlatform {
         monthKey: map['monthKey'],
         platformKey: map['platformKey'],
         numThisStage: map['numThisStage'],
+        dateThisStage: map['dateThisStage'],
         isPaidOff: map['isPaidOff']);
   }
 
   @override
   String toString() {
-    return 'SubPlatform Info: id:[$id], monthKey:[$monthKey], platformKey:[$platformKey], numThisStage:[$numThisStage], isPaidOff:[$isPaidOff]';
+    return 'SubPlatform Info: id:[$id], monthKey:[$monthKey], platformKey:[$platformKey], numThisStage:[$numThisStage], dateThisStage:[$dateThisStage], isPaidOff:[$isPaidOff]';
   }
 }
 

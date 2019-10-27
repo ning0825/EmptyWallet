@@ -16,6 +16,7 @@ const ITEM_TABLE_NAME = 'ItemTable';
 const SUBITEM_TABLE_NAME = 'SubItemTable';
 const HUMANLOAN_TABLE_NAME = 'HumanLoanTable';
 const SUBHUMAN_TABLE_NAME = 'SubHumanTable';
+const MONTH_TABLE_NAME = 'MonthTable';
 
 const CREATE_PLATFORM_TABLE = '''
     CREATE TABLE $PLATFORM_TABLE_NAME(
@@ -31,6 +32,7 @@ const CREATE_SUBPLATFORM_TABLE = '''
           monthKey TEXT,
           platformKey TEXT,  
           numThisStage REAL, 
+          dateThisStage TEXT,
           isPaidOff INT
     )
     ''';
@@ -73,6 +75,13 @@ const CREATE_SUBHUMAN_TABLE = '''
     )
 ''';
 
+const CREATE_MONTH_TABLE  = '''
+    CREATE TABLE $MONTH_TABLE_NAME(
+          id INTEGER PRIMARY KEY,
+          month TEXT,
+          monthTotal REAL
+    )
+''';
 //Many app have one database and would never need to close it, it will be closed when the app is terminated.
 Future<void>  openDB() async {
   var databasesPath = await getDatabasesPath();
@@ -90,8 +99,9 @@ Future<void>  openDB() async {
       db.execute(CREATE_SUBITEM_TABLE);
       db.execute(CREATE_HUMANLOAN_TABLE);
       db.execute(CREATE_SUBHUMAN_TABLE);
+      db.execute(CREATE_MONTH_TABLE);
     },
-    version: 2,
+    version: 1,
   );
 }
 
@@ -104,7 +114,7 @@ Future<int> insertDate(dynamic dn) async {
 //get humanloans.
 Future<List<HumanLoan>> getHls() async{
   final Database db = await database;
-  List<Map<String, dynamic>> maps = await db.query('$HUMANLOAN_TABLE_NAME');
+  List<Map<String, dynamic>> maps = await db.query(HUMANLOAN_TABLE_NAME);
   List<HumanLoan> list = [];
   for (var o in maps) {
     list.add(HumanLoan.mapTo(o));
@@ -166,12 +176,34 @@ Future<SubPlatform> getSubPlatform(String platformName, String monthKey) async{
   List<Map<String, dynamic>> maps = await db.query(SUBPLATFORM_TABLE_NAME, where: 'platformKey = ? and monthKey = ?', whereArgs: [platformName, monthKey]);
   assert(maps.length < 2, 'Error: The maps length should smaller than 2, check out database. Current length: ' + maps.length.toString());
   if (maps.length == 0) {
-    var sp = SubPlatform(monthKey: monthKey, platformKey: platformName, numThisStage: 0);
+    Platform pf = await getPlatformByName(platformName);
+    var sp = SubPlatform(monthKey: monthKey, platformKey: platformName, numThisStage: 0, dateThisStage: monthKey + '.' + pf.dueDate);
     int i =  await insertDate(sp);
     sp.id = i;
     return sp;
   }
   return SubPlatform.mapTo(maps[0]);
+}
+
+Future<List<Month>> getMonths() async{
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(MONTH_TABLE_NAME);
+  List<Month> list = [];
+  for (var o in maps) {
+    list.add(Month(id: o['id'], month: o['month'], monthTotal: o['monthTotal']));
+  }
+  return list;
+}
+
+Future<Month> getMonth(String month) async{
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(MONTH_TABLE_NAME, where: 'month = ?', whereArgs: [month]);
+  assert(maps.length < 2, 'Error, List of query specific month length should not larger than 1');
+  if(maps.length == 0) {
+    return null;
+  }
+  var map = maps[0];
+  return Month(id: map['id'], month: map['month'], monthTotal: map['monthTotal']);
 }
 
 //get subplatforms in month.
@@ -201,6 +233,12 @@ Future<void> updatePlatform(Platform platform) async{
 Future<void> updateHuman(HumanLoan humanLoan) async{
   final Database db = await database;
   await db.update(HUMANLOAN_TABLE_NAME, humanLoan.toMap(), where: 'id = ?', whereArgs: [humanLoan.id]);
+}
+
+//update month
+Future<void> updateMonth(Month month) async{
+  final Database db = await database;
+  await db.update(MONTH_TABLE_NAME, month.toMap(), where: 'id = ?', whereArgs: [month.id]);
 }
 
 //get items in platform.

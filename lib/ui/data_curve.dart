@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
-
-var dataArray = [1890, 1200, 2000, 2700, 1000, 2300, 3200, 2400, 1500];
-var monthArray = [
-  '2019.1',
-  '2019.2',
-  '2019.3',
-  '2019.4',
-  '2019.5',
-  '2019.6',
-  '2019.7',
-  '2019.8',
-  '2019.9'
-];
-
 //Offset os = Offset(0, 0); //点击曲线时，显示数值的位置
+List<double> dataArray;
+List<String> monthArray;
 
 class DataCurveWidget extends StatelessWidget {
+  DataCurveWidget(List<double> dList, List<String> mList) {
+    dataArray = dList;
+    monthArray = mList;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DataCurveHome();
@@ -28,8 +21,19 @@ class DataCurveHome extends StatefulWidget {
 }
 
 class _DataCurveHomeState extends State<DataCurveHome> {
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
+
+    if(dataArray == null) {
+      return Container();
+    }
+
     return Container(
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -37,7 +41,7 @@ class _DataCurveHomeState extends State<DataCurveHome> {
           child: GestureDetector(
             child: CustomPaint(
               painter: DataCurvePainter(),
-              size: Size(1000, 500),
+              size: Size(100 * dataArray.length.toDouble(), 500),
             ),
             onTapUp: (tapUpDetails) {
 //              os = tapUpDetails.localPosition;
@@ -50,12 +54,14 @@ class _DataCurveHomeState extends State<DataCurveHome> {
 }
 
 class DataCurvePainter extends CustomPainter {
-  var maxData = 0;
-  List<double> timeArrayAxis = List(9); //X轴坐标
-  List<double> dataArrayAxis = List(9); //Y轴坐标
-  List<Offset> offsetArray = List(9); //坐标数组
+  static var arrayLength = dataArray.length;
+  var maxData = 0.0;
+  List<double> monthAxisArray = List(arrayLength); //X轴坐标
+  List<double> dataAxisArray = List(arrayLength); //Y轴坐标
+  List<Offset> offsetArray = List(arrayLength); //坐标数组
 
-  double dateHeight = 30.0; //空出显示日期的地方
+  double monthHeight = 100.0; //空出显示日期的地方
+  double dataHeight = 60.0; //空出显示数据的地方
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -66,29 +72,29 @@ class DataCurvePainter extends CustomPainter {
       ..strokeWidth = 20
       ..strokeCap = StrokeCap.round;
 
-    var pxPerTime = size.width / 10;
-    for (int i = 0; i < timeArrayAxis.length; i++) {
-      timeArrayAxis[i] = pxPerTime * (i + 1);
+    var pxPerTime = size.width / (arrayLength + 1);
+    for (int i = 0; i < monthAxisArray.length; i++) {
+      monthAxisArray[i] = pxPerTime * (i + 1);
     } //这里是X轴坐标
 
-    for (int j = 0; j < dataArray.length; j++) {
-      if (dataArray[j] > maxData) {
-        maxData = dataArray[j];
+    for (int i = 0; i < dataArray.length; i++) {
+      if (dataArray[i] > maxData) {
+        maxData = dataArray[i];
       }
     } //找出最大数值，确定纵坐标高度
 
-    var pxPerData = size.height / maxData;
+    var pxPerData = (size.height - monthHeight - dataHeight) / maxData;
     for (int m = 0; m < dataArray.length; m++) {
-      dataArrayAxis[m] = size.height - dataArray[m] * pxPerData;
+      dataAxisArray[m] = size.height - dataArray[m] * pxPerData - monthHeight;
     } //这里是Y轴坐标
 
-    for (int n = 0; n < timeArrayAxis.length; n++) {
-      var os = Offset(timeArrayAxis[n], dataArrayAxis[n]);
+    for (int n = 0; n < monthAxisArray.length; n++) {
+      var os = Offset(monthAxisArray[n], dataAxisArray[n]);
       offsetArray[n] = os;
     } //这里是坐标数组
 
     Path curvePath = new Path();
-    for (int q = 0; q < timeArrayAxis.length - 1; q++) {
+    for (int q = 0; q < monthAxisArray.length - 1; q++) {
       if (q == 0) {
         curvePath.moveTo(offsetArray[q].dx, offsetArray[q].dy);
       }
@@ -105,7 +111,7 @@ class DataCurvePainter extends CustomPainter {
     Offset offsetCenter = Offset(
         (offsetArray[0].dx + offsetArray[offsetArray.length - 1].dx) / 2,
         maxData * pxPerData / 2);
-    var curveWidth = pxPerTime * 8;
+    var curveWidth = pxPerTime * (arrayLength - 1);
     var curveHeight = offsetCenter.dy * 2;
     var rectToDraw = Rect.fromCenter(
         center: offsetCenter, width: curveWidth, height: curveHeight);
@@ -124,9 +130,9 @@ class DataCurvePainter extends CustomPainter {
     shadowPaint.style = PaintingStyle.fill;
 
     var path = Path()
-      ..moveTo(offsetArray[8].dx, offsetArray[8].dy)
-      ..lineTo(offsetArray[8].dx, size.height - 110)
-      ..lineTo(offsetArray[0].dx, size.height - 110)
+      ..moveTo(offsetArray[arrayLength - 1].dx, offsetArray[arrayLength - 1].dy)
+      ..lineTo(offsetArray[arrayLength - 1].dx, size.height - monthHeight)
+      ..lineTo(offsetArray[0].dx, size.height - monthHeight)
       ..lineTo(offsetArray[0].dx, offsetArray[0].dy);
     path.addPath(curvePath, Offset(0, 0));
     path.close();
@@ -142,7 +148,18 @@ class DataCurvePainter extends CustomPainter {
           textDirection: TextDirection.rtl);
       textPainter.layout();
       textPainter.paint(
-          canvas, Offset(o.dx - textPainter.width / 2, size.height - 110));
+          canvas, Offset(o.dx - textPainter.width / 2, size.height - monthHeight));
+
+      TextSpan span1 = TextSpan(
+          text: dataArray[i].toString(),
+          style: TextStyle(fontSize: 20, color: Colors.white));
+      var textPainter1 = TextPainter(
+          text: span1,
+          textAlign: TextAlign.left,
+          textDirection: TextDirection.rtl);
+      textPainter1.layout();
+      textPainter1.paint(
+          canvas, Offset(o.dx - textPainter1.width / 2, o.dy - textPainter1.height));
     }
 
 //    canvas.drawCircle(os, 10, paint);
