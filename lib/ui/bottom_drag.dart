@@ -95,7 +95,8 @@ class _DragContainerState extends State<DragContainer>
               ),
               onNotification: (d) {
                 //下拉拖动
-                if (d.dragDetails != null) {
+                if (d.dragDetails != null && d.dragDetails.delta.dy > 0.0) {
+                  print('----------------------------------------');
                   isEdge = true;
                   topDis = topDis + d.dragDetails.delta.dy;
                   setState(() {});

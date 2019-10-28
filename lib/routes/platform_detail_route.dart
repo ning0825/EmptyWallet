@@ -1,6 +1,7 @@
 import 'package:empty_wallet/bloc/bloc_month.dart';
 import 'package:empty_wallet/bloc/bloc_platform_detail.dart';
 import 'package:empty_wallet/db/item_bean.dart';
+import 'package:empty_wallet/routes/item_detail_route.dart';
 import 'package:empty_wallet/ui/custom_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,6 +91,7 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
                               return ListTile(
                                 title: Text(s.its[i].numPerStage.toString()),
                                 trailing: Text(s.its[i].stageNum.toString()),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ItemDetailRoute(s.its[i]))),
                               );
                             })
                         : Text('no date'))

@@ -52,7 +52,8 @@ const CREATE_SUBITEM_TABLE = '''
           itemKey TEXT,
           monthKey TEXT,
           numThisStage REAL,
-          currentStage INT
+          currentStage INT,
+          isPaidOff INT
     )
     ''';
 const CREATE_HUMANLOAN_TABLE = '''
@@ -250,4 +251,20 @@ Future<List<Item>> getItems(String platformKey) async {
     items.add(Item.mapTo(o));
   }
   return items;
+}
+
+Future<void> updateItem(Item item) async{
+  final Database db = await database;
+  await db.update(SUBITEM_TABLE_NAME, item.toMap(), where: 'id = ?', whereArgs: [item.id]);
+}
+
+Future<SubItem> getSubItem(String itemKey, String monthKey) async {
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(SUBITEM_TABLE_NAME, where: 'itemKey = ? and monthKey = ?', whereArgs: [itemKey, monthKey]);
+  return SubItem.mapTo(maps[0]);
+}
+
+Future<void> updateSubItem(SubItem subItem) async{
+  final Database db = await database;
+  await db.update(SUBITEM_TABLE_NAME, subItem.toMap(), where: 'id = ?', whereArgs: [subItem.id]);
 }

@@ -1,7 +1,6 @@
 import 'dart:core';
 import 'package:flutter/material.dart';
 
-
 class Month {
   int id;
   String month;
@@ -14,7 +13,8 @@ class Month {
   }
 
   static Month mapTo(Map<String, dynamic> map) {
-    return Month(id: map['id'], month: map['month'], monthTotal: map['monthTotal']);
+    return Month(
+        id: map['id'], month: map['month'], monthTotal: map['monthTotal']);
   }
 
   String toString() {
@@ -27,17 +27,21 @@ class Platform {
   String platformName;
   String dueDate;
   double totalNum;
+  double paidNum;
 
-  Platform({@required this.platformName,
-    @required this.dueDate,
-    this.totalNum = 0.0,
-    this.id});
+  Platform(
+      {@required this.platformName,
+      @required this.dueDate,
+      this.totalNum = 0.0,
+      this.paidNum = 0.0,
+      this.id});
 
   Map<String, dynamic> toMap() {
     return {
       'platformName': platformName,
       'dueDate': dueDate,
-      'totalNum': totalNum
+      'totalNum': totalNum,
+      'paidNum': paidNum
     };
   }
 
@@ -46,12 +50,13 @@ class Platform {
         id: map['id'],
         platformName: map['platformName'],
         dueDate: map['dueDate'],
-        totalNum: map['totalNum']);
+        totalNum: map['totalNum'],
+        paidNum: map['paidNum']);
   }
 
   @override
   String toString() {
-    return 'Platform Info: id:[$id], platformName:[$platformName], dueDate:[$dueDate], totalNum:[$totalNum]';
+    return 'Platform Info: id:[$id], platformName:[$platformName], dueDate:[$dueDate], totalNum:[$totalNum], paidNum: [$paidNum]';
   }
 }
 
@@ -63,12 +68,13 @@ class SubPlatform {
   String dateThisStage;
   int isPaidOff;
 
-  SubPlatform({this.id,
-    @required this.monthKey,
-    @required this.platformKey,
-    @required this.numThisStage,
-    @required this.dateThisStage,
-    this.isPaidOff = 0});
+  SubPlatform(
+      {this.id,
+      @required this.monthKey,
+      @required this.platformKey,
+      @required this.numThisStage,
+      @required this.dateThisStage,
+      this.isPaidOff = 0});
 
   Map<String, dynamic> toMap() {
     return {
@@ -103,13 +109,16 @@ class Item {
   double numPerStage;
   String itemName;
   int paidStageNum;
+  int currentState;
 
-  Item({this.id,
-    @required this.platformKey,
-    @required this.stageNum,
-    @required this.numPerStage,
-    @required this.itemName,
-    this.paidStageNum: 0});
+  Item(
+      {this.id,
+      @required this.platformKey,
+      @required this.stageNum,
+      @required this.numPerStage,
+      @required this.itemName,
+      this.paidStageNum = 0,
+      this.currentState = 1});
 
   Map<String, dynamic> toMap() {
     return {
@@ -117,7 +126,8 @@ class Item {
       'stageNum': stageNum,
       'numPerStage': numPerStage,
       'itemName': itemName,
-      'paidStageNum': paidStageNum
+      'paidStageNum': paidStageNum,
+      'currentState': currentState
     };
   }
 
@@ -128,12 +138,13 @@ class Item {
         stageNum: map['stageNum'],
         numPerStage: map['numPerStage'],
         itemName: map['itemName'],
-        paidStageNum: map['paidStageNum']);
+        paidStageNum: map['paidStageNum'],
+        currentState: map['currentState']);
   }
 
   @override
   String toString() {
-    return 'Item Info: id:[$id], platformKey:[$platformKey], stageNum:[$stageNum], numPerStage:[$numPerStage], itemName:[$itemName], paidStageNum:[$paidStageNum]';
+    return 'Item Info: id:[$id], platformKey:[$platformKey], stageNum:[$stageNum], numPerStage:[$numPerStage], itemName:[$itemName], paidStageNum:[$paidStageNum], currentState: [$currentState]';
   }
 }
 
@@ -143,19 +154,23 @@ class SubItem {
   String monthKey;
   double numThisStage;
   int currentStage;
+  int isPaidOff;
 
-  SubItem({this.id,
-    @required this.itemKey,
-    @required this.monthKey,
-    @required this.numThisStage,
-    @required this.currentStage});
+  SubItem(
+      {this.id,
+      @required this.itemKey,
+      @required this.monthKey,
+      @required this.numThisStage,
+      @required this.currentStage,
+      this.isPaidOff = 0});
 
   Map<String, dynamic> toMap() {
     return {
       'itemKey': itemKey,
       'monthKey': monthKey,
       'numThisStage': numThisStage,
-      'currentStage': currentStage
+      'currentStage': currentStage,
+      'isPaidOff': isPaidOff
     };
   }
 
@@ -165,12 +180,13 @@ class SubItem {
         itemKey: map['itemKey'],
         monthKey: map['monthKey'],
         numThisStage: map['numThisStage'],
-        currentStage: map['currentStage']);
+        currentStage: map['currentStage'],
+        isPaidOff: map['isPaidOff']);
   }
 
   @override
   String toString() {
-    return 'SubPlatform Info: id:[$id], itemKey:[$itemKey], monthKey:[$monthKey], numThisStage:[$numThisStage], currentStage:[$currentStage]';
+    return 'SubItem Info: id:[$id], itemKey:[$itemKey], monthKey:[$monthKey], numThisStage:[$numThisStage], currentStage:[$currentStage], isPaidOff: [$isPaidOff]';
   }
 }
 
@@ -181,13 +197,12 @@ class HumanLoan {
   double hPaid;
   double hNotPaid;
 
-  HumanLoan({
-    this.id,
-    @required this.hName,
-    @required this.hTotal,
-    this.hPaid = 0.0,
-    this.hNotPaid = 0.0
-  });
+  HumanLoan(
+      {this.id,
+      @required this.hName,
+      @required this.hTotal,
+      this.hPaid = 0.0,
+      this.hNotPaid = 0.0});
 
   Map<String, dynamic> toMap() {
     return {
@@ -199,7 +214,8 @@ class HumanLoan {
   }
 
   static HumanLoan mapTo(Map<String, dynamic> map) {
-    return HumanLoan(id: map['id'],
+    return HumanLoan(
+        id: map['id'],
         hName: map['hName'],
         hTotal: map['hTotal'],
         hPaid: map['hPaid'],
@@ -216,11 +232,18 @@ class SubHuman {
   String sName;
   double subNum;
   String loanDate;
+
   //0: wechat 1:zhifubao 2: cash(use this if forget)
   int paymentMethod;
   double currentTotal;
 
-  SubHuman({this.id, @required this.sName, @required this.subNum, @required this.loanDate, @required this.paymentMethod, @required this.currentTotal});
+  SubHuman(
+      {this.id,
+      @required this.sName,
+      @required this.subNum,
+      @required this.loanDate,
+      @required this.paymentMethod,
+      @required this.currentTotal});
 
   Map<String, dynamic> toMap() {
     return {
@@ -234,7 +257,12 @@ class SubHuman {
   }
 
   static SubHuman mapTo(Map<String, dynamic> map) {
-    return SubHuman(sName: map['sName'], subNum: map['subNum'], loanDate: map['loanDate'], paymentMethod: map['paymentMethod'], currentTotal: map['currentTotal']);
+    return SubHuman(
+        sName: map['sName'],
+        subNum: map['subNum'],
+        loanDate: map['loanDate'],
+        paymentMethod: map['paymentMethod'],
+        currentTotal: map['currentTotal']);
   }
 
   String toString() {
@@ -255,16 +283,16 @@ class PlatformDetail {
 class ItemAddArgs {
   Platform platform;
   SubPlatform subPlatform;
-  int itemSN;//分期数
+  int itemSN; //分期数
   double itemNPS;
 
-  ItemAddArgs(this.platform, this.subPlatform, this.itemSN,
-      this.itemNPS); //每期数目
+  ItemAddArgs(
+      this.platform, this.subPlatform, this.itemSN, this.itemNPS); //每期数目
 
   ItemAddArgs.empty();
 }
 
-class SubHumanAddArgs{
+class SubHumanAddArgs {
   HumanLoan humanLoan;
   List<SubHuman> subHumans;
 
@@ -273,7 +301,7 @@ class SubHumanAddArgs{
   SubHumanAddArgs.empty();
 }
 
-class SubHumanAddArgs2{
+class SubHumanAddArgs2 {
   HumanLoan humanLoan;
   double num;
   String date;

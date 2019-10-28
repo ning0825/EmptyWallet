@@ -284,7 +284,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text(subPlatforms[index].dateThisStage ?? 'test'),
+                      child: Text(subPlatforms[index].dateThisStage ?? 'N/A'),
                     )
                   ],
                 ),
