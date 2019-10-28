@@ -195,7 +195,8 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                         currentCardPosition = index;
                         setState(() {});
                         _animationController.forward(from: 0.0);
-                      }),
+                      }
+                      ),
                 ),
                 Padding(
                   padding:
@@ -295,10 +296,12 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
           ),
           IconButton(
             icon: Icon(
-              Icons.all_inclusive,
+              Icons.confirmation_number,
               size: 30,
+              color: subPlatforms[index].isPaidOff == 0 ? Colors.redAccent : Colors.greenAccent,
             ),
-            onPressed: () => print('YOU CLICK THE BUTTON!'),
+            onPressed: () => BlocProvider.of<SubPlatformBloc>(context)
+                .add(SubPlatformEvent(eventId: SubPlatformEvent.CHANGE_PAY_STATE, data: subPlatforms[index])),
             padding: EdgeInsets.all(2),
           )
         ],
@@ -355,7 +358,9 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   Widget oweCard() {
     var oweTotal = 0.0;
     for (var o in subPlatforms) {
-      oweTotal += o.numThisStage;
+      if(o.isPaidOff == 0) {
+        oweTotal += o.numThisStage;
+      }
     }
 
     return BaseCard(

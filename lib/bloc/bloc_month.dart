@@ -29,7 +29,6 @@ class MonthBloc extends Bloc<MonthEvent, MonthArgs> {
     for (var o in list) {
       dataArray.add(o.monthTotal);
       monthArray.add(o.month);
-      print(o.toString());
     }
     return MonthArgs(monthList: monthArray, dataList: dataArray);
   }
