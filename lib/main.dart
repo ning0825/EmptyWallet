@@ -79,6 +79,10 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
 
   var _controller = PageController(viewportFraction: 0.85);
 
+  var oweTotal = 0.0;
+  var owePaid = 0.0;
+  var oweRemain = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -269,42 +273,46 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   Widget oweTileWidget(int index) {
     return Padding(
       padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: GestureDetector(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      subPlatforms[index].platformKey,
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text(subPlatforms[index].dateThisStage ?? 'N/A'),
-                    )
-                  ],
-                ),
-                behavior: HitTestBehavior.opaque,
-                onTap: () => go2Detail(subPlatforms[index].platformKey)),
-          ),
-          Expanded(
-            child: Text(subPlatforms[index].numThisStage.toString()),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.confirmation_number,
-              size: 30,
-              color: subPlatforms[index].isPaidOff == 0 ? Colors.redAccent : Colors.greenAccent,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => go2Detail(subPlatforms[index].platformKey),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    subPlatforms[index].platformKey,
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(subPlatforms[index].dateThisStage ?? 'N/A'),
+                  )
+                ],
+              ),
             ),
-            onPressed: () => BlocProvider.of<SubPlatformBloc>(context)
-                .add(SubPlatformEvent(eventId: SubPlatformEvent.CHANGE_PAY_STATE, data: subPlatforms[index])),
-            padding: EdgeInsets.all(2),
-          )
-        ],
+            Expanded(
+              child: Text(subPlatforms[index].numThisStage.toString()),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.confirmation_number,
+                size: 30,
+                color: subPlatforms[index].isPaidOff == 0 ? Colors.redAccent : Colors.greenAccent,
+              ),
+              onPressed: (){
+                BlocProvider.of<SubPlatformBloc>(context)
+                    .add(SubPlatformEvent(eventId: SubPlatformEvent.CHANGE_PAY_STATE, data: subPlatforms[index]));
+
+              },
+              padding: EdgeInsets.all(2),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -356,12 +364,16 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
 
 //卡片【0】
   Widget oweCard() {
-    var oweTotal = 0.0;
+    oweTotal = 0.0;
+    owePaid = 0.0;
+    oweRemain = 0.0;
     for (var o in subPlatforms) {
-      if(o.isPaidOff == 0) {
-        oweTotal += o.numThisStage;
+      oweTotal += o.numThisStage;
+      if(o.isPaidOff == 1) {
+        owePaid += o.numThisStage;
       }
     }
+    oweRemain = oweTotal - owePaid;
 
     return BaseCard(
         child: Column(
@@ -373,9 +385,11 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
         ),
         Container(height: 10),
         Text(
-          '￥$oweTotal',
+          '￥$oweRemain',
           style: TextStyle(color: Colors.white, fontSize: 50),
         ),
+        Text('total: ' + oweTotal.toString(),style: TextStyle(color: Colors.white),),
+        Text('paid: ' + owePaid.toString(),style: TextStyle(color: Colors.white),)
       ],
     ));
   }

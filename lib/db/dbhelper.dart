@@ -23,7 +23,8 @@ const CREATE_PLATFORM_TABLE = '''
           id INTEGER PRIMARY KEY,
           platformName TEXT,
           dueDate TEXT,
-          totalNum REAL
+          totalNum REAL,
+          paidNum REAL
     )
       ''';
 const CREATE_SUBPLATFORM_TABLE = '''
@@ -43,7 +44,8 @@ const CREATE_ITEM_TABLE = '''
           itemName TEXT,
           stageNum INT,
           numPerStage REAL,
-          paidStageNum INT
+          paidStageNum INT,
+          currentStage INT
     )
 ''';
 const CREATE_SUBITEM_TABLE = '''
@@ -109,6 +111,7 @@ Future<void>  openDB() async {
 //insert method.
 Future<int> insertDate(dynamic dn) async {
   final Database db = await database;
+
   return await db.insert(dn.runtimeType.toString() + 'Table', dn.toMap());
 }
 
@@ -158,20 +161,9 @@ Future<Platform> getPlatformByName(String name) async{
   return pf;
 }
 
-//delete specific item.
-//Future<void> delById(int id) async {
-//  final Database db = await database;
-//  await db.delete(ITEM_TABLE_NAME, where: "id = ?", whereArgs: [id]);
-//}
-
-//update specific item.
-//Future<void> update(Item item) async {
-//  final Database db = await database;
-//  await db.update(ITEM_TABLE_NAME, item.toMap(),
-//      where: "name = ?", whereArgs: [item.itemName]);
-//}
-
-//get subplatform.
+//*********************************************************
+//Platform
+//*********************************************************
 Future<SubPlatform> getSubPlatform(String platformName, String monthKey) async{
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(SUBPLATFORM_TABLE_NAME, where: 'platformKey = ? and monthKey = ?', whereArgs: [platformName, monthKey]);
@@ -186,6 +178,14 @@ Future<SubPlatform> getSubPlatform(String platformName, String monthKey) async{
   return SubPlatform.mapTo(maps[0]);
 }
 
+Future<void> updatePlatform(Platform platform) async{
+  final Database db = await database;
+  await db.update(PLATFORM_TABLE_NAME, platform.toMap(), where: 'id = ?', whereArgs: [platform.id]);
+}
+
+//*********************************************************
+//Month
+//*********************************************************
 Future<List<Month>> getMonths() async{
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(MONTH_TABLE_NAME);
@@ -207,7 +207,9 @@ Future<Month> getMonth(String month) async{
   return Month(id: map['id'], month: map['month'], monthTotal: map['monthTotal']);
 }
 
-//get subplatforms in month.
+//*********************************************************
+//SubPlatform
+//*********************************************************
 Future<List<SubPlatform>> getSubPlatformsByMonth(String monthKey) async{
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(SUBPLATFORM_TABLE_NAME, where: 'monthKey = ?', whereArgs: [monthKey]);
@@ -218,25 +220,19 @@ Future<List<SubPlatform>> getSubPlatformsByMonth(String monthKey) async{
   return list;
 }
 
-//update specific subplatform.
 Future<void> updateSubPlatform(SubPlatform subPlatform) async {
   final Database db = await database;
   await db.update(SUBPLATFORM_TABLE_NAME, subPlatform.toMap(), where: 'id = ?', whereArgs: [subPlatform.id]);
 }
 
-//update specific platform.
-Future<void> updatePlatform(Platform platform) async{
-  final Database db = await database;
-  await db.update(PLATFORM_TABLE_NAME, platform.toMap(), where: 'id = ?', whereArgs: [platform.id]);
-}
-
-//update human.
+//*********************************************************
+//Human
+//*********************************************************
 Future<void> updateHuman(HumanLoan humanLoan) async{
   final Database db = await database;
   await db.update(HUMANLOAN_TABLE_NAME, humanLoan.toMap(), where: 'id = ?', whereArgs: [humanLoan.id]);
 }
 
-//update month
 Future<void> updateMonth(Month month) async{
   final Database db = await database;
   await db.update(MONTH_TABLE_NAME, month.toMap(), where: 'id = ?', whereArgs: [month.id]);
@@ -255,13 +251,23 @@ Future<List<Item>> getItems(String platformKey) async {
 
 Future<void> updateItem(Item item) async{
   final Database db = await database;
-  await db.update(SUBITEM_TABLE_NAME, item.toMap(), where: 'id = ?', whereArgs: [item.id]);
+  await db.update(ITEM_TABLE_NAME, item.toMap(), where: 'id = ?', whereArgs: [item.id]);
 }
 
 Future<SubItem> getSubItem(String itemKey, String monthKey) async {
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(SUBITEM_TABLE_NAME, where: 'itemKey = ? and monthKey = ?', whereArgs: [itemKey, monthKey]);
   return SubItem.mapTo(maps[0]);
+}
+
+Future<List<SubItem>> getSubItems(String itemKey) async{
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(SUBITEM_TABLE_NAME, where: 'itemKey = ?', whereArgs: [itemKey]);
+  List<SubItem> list = [];
+  for (var o in maps) {
+    list.add(SubItem.mapTo(o));
+  }
+  return list;
 }
 
 Future<void> updateSubItem(SubItem subItem) async{

@@ -52,25 +52,28 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
   }
 
   Future<void> changePayState(SubPlatform sp) async{
+    bool z2o;//0 to 1
+
     //update SubPlatform
-    sp.isPaidOff == 1 ? sp.isPaidOff = 0 : sp.isPaidOff = 1;
+    z2o = sp.isPaidOff == 0;
+    z2o ? sp.isPaidOff = 1 : sp.isPaidOff = 0;
     await updateSubPlatform(sp);
 
     List<Item> items = await getItems(sp.platformKey);
     for (var o in items) {
       //update Item
-      o.paidStageNum += 1;
+      o.paidStageNum += z2o ? 1 : -1;
       await updateItem(o);
 
       //update SubItem
       SubItem subItem = await getSubItem(o.itemName, sp.monthKey);
-      subItem.isPaidOff = 1;
+      subItem.isPaidOff = z2o ? 1 : 0;
       await updateSubItem(subItem);
     }
 
     //update platform
     Platform pf = await getPlatformByName(sp.platformKey);
-    pf.paidNum += sp.numThisStage;
+    pf.paidNum += z2o ? sp.numThisStage : -sp.numThisStage;
     await updatePlatform(pf);
   }
 }

@@ -30,7 +30,7 @@ class _DataCurveHomeState extends State<DataCurveHome> {
   @override
   Widget build(BuildContext context) {
 
-    if(dataArray == null) {
+    if(dataArray == null || dataArray.length == 0) {
       return Container();
     }
 

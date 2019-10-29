@@ -45,6 +45,9 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
     var nowString = now.year.toString() + '.' + now.month.toString();
     var subPlatform = await getSubPlatform(pf.platformName, nowString);
     var items = await getItems(pf.platformName);
+    for (var o in items) {
+      print('----------------------------' + o.toString());
+    }
     return PlatformDetail(pf, subPlatform, items);
   }
 

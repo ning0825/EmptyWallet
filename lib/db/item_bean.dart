@@ -109,7 +109,7 @@ class Item {
   double numPerStage;
   String itemName;
   int paidStageNum;
-  int currentState;
+  int currentStage;
 
   Item(
       {this.id,
@@ -118,7 +118,7 @@ class Item {
       @required this.numPerStage,
       @required this.itemName,
       this.paidStageNum = 0,
-      this.currentState = 1});
+      this.currentStage = 1});
 
   Map<String, dynamic> toMap() {
     return {
@@ -127,7 +127,7 @@ class Item {
       'numPerStage': numPerStage,
       'itemName': itemName,
       'paidStageNum': paidStageNum,
-      'currentState': currentState
+      'currentStage': currentStage
     };
   }
 
@@ -139,12 +139,12 @@ class Item {
         numPerStage: map['numPerStage'],
         itemName: map['itemName'],
         paidStageNum: map['paidStageNum'],
-        currentState: map['currentState']);
+        currentStage: map['currentStage']);
   }
 
   @override
   String toString() {
-    return 'Item Info: id:[$id], platformKey:[$platformKey], stageNum:[$stageNum], numPerStage:[$numPerStage], itemName:[$itemName], paidStageNum:[$paidStageNum], currentState: [$currentState]';
+    return 'Item Info: id:[$id], platformKey:[$platformKey], stageNum:[$stageNum], numPerStage:[$numPerStage], itemName:[$itemName], paidStageNum:[$paidStageNum], currentStage: [$currentStage]';
   }
 }
 
