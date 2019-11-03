@@ -102,7 +102,6 @@ class EditItemState extends State<EditItemHome> {
     //check if this platform already exist.
     var pfInDB = await getPlatformByName(name);
     if (pfInDB != null) {
-      print('EditItemState.saveAndGo' 'pf existed');
       var snackbar = SnackBar(
           content: Text('A platform contains this name already existed, please check the name'),
           backgroundColor: Colors.redAccent,

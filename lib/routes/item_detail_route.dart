@@ -1,26 +1,33 @@
+import 'package:empty_wallet/bloc/bloc_item_detail.dart';
+import 'package:empty_wallet/bloc/bloc_month.dart';
+import 'package:empty_wallet/bloc/bloc_platform_detail.dart';
+import 'package:empty_wallet/bloc/bloc_subplatform.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
 import 'package:empty_wallet/db/item_bean.dart';
+import 'package:empty_wallet/routes/platform_detail_route.dart';
 import 'package:empty_wallet/ui/custom_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-BuildContext mContext;
-Item mItem;
-List<SubItem> subItems = [];
+import '../main.dart';
+
+BuildContext idrContext;
+SubItem mSubItem;
+//List<SubItem> subItems = [];
 
 class ItemDetailRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    mContext = context;
-
-    print('------------------' + mItem.toString());
+    idrContext = context;
 
     return MaterialApp(
-      home: ItemDetailHome(),
+      home: BlocProvider<ItemDetailBloc>(
+          builder: (_) => ItemDetailBloc(), child: ItemDetailHome()),
     );
   }
 
-  ItemDetailRoute(Item item) {
-    mItem = item;
+  ItemDetailRoute(SubItem subItem) {
+    mSubItem = subItem;
   }
 }
 
@@ -32,17 +39,20 @@ class ItemDetailHome extends StatefulWidget {
 class _ItemDetailHomeState extends State<ItemDetailHome> {
   var style = TextStyle(color: Colors.white);
 
+  ItemDetailBloc _itemDetailBloc;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    setSubItems().whenComplete(()=>{
-      setState((){})
-    });
+    _itemDetailBloc = BlocProvider.of<ItemDetailBloc>(context);
+    _showSubItems();
   }
 
-  Future<void> setSubItems() async {
-    subItems = await getSubItems(mItem.itemName);
+  Future<void> _showSubItems() async {
+    Item item = await getItemByName(mSubItem.itemKey);
+    _itemDetailBloc.add(
+        ItemDetailEvent(methodId: ItemDetailEvent.SHOW_SUBITEMS, data: item));
   }
 
   @override
@@ -56,17 +66,47 @@ class _ItemDetailHomeState extends State<ItemDetailHome> {
               CusToolbar(
                 title: 'Item Detail',
                 leftIcon: Icons.close,
-                leftOnPress: () => Navigator.pop(mContext),
+                leftOnPress: () => Navigator.pop(idrContext),
               ),
               Expanded(
-                child: ListView.builder(
-                    itemCount: subItems.length,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) => ListTile(
-                          leading: Text(subItems[index].numThisStage.toString(), style: style,),
-                          title: Text(subItems[index].monthKey, style: style),
-                          trailing: Text(subItems[index].currentStage.toString(), style: style),
-                        )),
+                child: BlocBuilder<ItemDetailBloc, List<SubItem>>(
+                  builder: (_, subItems) {
+                    if(subItems.length == 0) {
+                      return Container();
+                    }
+                    return ListView.builder(
+                        itemCount: subItems.length,
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) => ListTile(
+                              leading: Text(
+                                subItems[index].numThisStage.toString(),
+                                style: TextStyle(color: subItems[index].isPaidOff == 0 ? Colors.redAccent : Colors.white),
+                              ),
+                              title:
+                                  Text(subItems[index].monthKey, style: style),
+                              subtitle: Text(
+                                subItems[index].currentStage.toString() +
+                                    '/' +
+                                    subItems.length.toString(),
+                                style: style,
+                              ),
+                              trailing: IconButton(
+                                icon: Icon(
+                                  Icons.adb,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  //update ItemDetailRoute
+                                  _itemDetailBloc.add(
+                                      ItemDetailEvent(
+                                          methodId: ItemDetailEvent
+                                              .CHANGE_SUBITEM_STATE,
+                                          data: subItems[index]));
+                                }
+                              ),
+                            ));
+                  },
+                ),
               )
             ],
           ),

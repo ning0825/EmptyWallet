@@ -275,7 +275,10 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
       padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => go2Detail(subPlatforms[index].platformKey),
+        onTap: () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => PlatformDetailRoute.sub(subPlatforms[index])));
+        },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -371,6 +374,8 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
       oweTotal += o.numThisStage;
       if(o.isPaidOff == 1) {
         owePaid += o.numThisStage;
+      } else {
+        owePaid += o.paidNum;
       }
     }
     oweRemain = oweTotal - owePaid;

@@ -65,6 +65,7 @@ class SubPlatform {
   String monthKey;
   String platformKey;
   double numThisStage;
+  double paidNum;
   String dateThisStage;
   int isPaidOff;
 
@@ -74,13 +75,15 @@ class SubPlatform {
       @required this.platformKey,
       @required this.numThisStage,
       @required this.dateThisStage,
-      this.isPaidOff = 0});
+      this.isPaidOff = 0,
+      this.paidNum = 0.0});
 
   Map<String, dynamic> toMap() {
     return {
       'monthKey': monthKey,
       'platformKey': platformKey,
       'numThisStage': numThisStage,
+      'paidNum': paidNum,
       'dateThisStage': dateThisStage,
       'isPaidOff': isPaidOff
     };
@@ -92,13 +95,14 @@ class SubPlatform {
         monthKey: map['monthKey'],
         platformKey: map['platformKey'],
         numThisStage: map['numThisStage'],
+        paidNum: map['paidNum'],
         dateThisStage: map['dateThisStage'],
         isPaidOff: map['isPaidOff']);
   }
 
   @override
   String toString() {
-    return 'SubPlatform Info: id:[$id], monthKey:[$monthKey], platformKey:[$platformKey], numThisStage:[$numThisStage], dateThisStage:[$dateThisStage], isPaidOff:[$isPaidOff]';
+    return 'SubPlatform Info: id:[$id], monthKey:[$monthKey], platformKey:[$platformKey], numThisStage:[$numThisStage], paidNum:[$paidNum], dateThisStage:[$dateThisStage], isPaidOff:[$isPaidOff]';
   }
 }
 
@@ -154,6 +158,7 @@ class SubItem {
   String monthKey;
   double numThisStage;
   int currentStage;
+  int totalStages;
   int isPaidOff;
 
   SubItem(
@@ -162,6 +167,7 @@ class SubItem {
       @required this.monthKey,
       @required this.numThisStage,
       @required this.currentStage,
+      @required this.totalStages,
       this.isPaidOff = 0});
 
   Map<String, dynamic> toMap() {
@@ -170,6 +176,7 @@ class SubItem {
       'monthKey': monthKey,
       'numThisStage': numThisStage,
       'currentStage': currentStage,
+      'totalStages': totalStages,
       'isPaidOff': isPaidOff
     };
   }
@@ -181,12 +188,13 @@ class SubItem {
         monthKey: map['monthKey'],
         numThisStage: map['numThisStage'],
         currentStage: map['currentStage'],
+        totalStages: map['totalStages'],
         isPaidOff: map['isPaidOff']);
   }
 
   @override
   String toString() {
-    return 'SubItem Info: id:[$id], itemKey:[$itemKey], monthKey:[$monthKey], numThisStage:[$numThisStage], currentStage:[$currentStage], isPaidOff: [$isPaidOff]';
+    return 'SubItem Info: id:[$id], itemKey:[$itemKey], monthKey:[$monthKey], numThisStage:[$numThisStage], currentStage:[$currentStage], totalStages:[$totalStages], isPaidOff: [$isPaidOff]';
   }
 }
 
@@ -273,9 +281,9 @@ class SubHuman {
 class PlatformDetail {
   Platform pf;
   SubPlatform spf;
-  List<Item> its;
+  List<SubItem> sis;
 
-  PlatformDetail(this.pf, this.spf, this.its);
+  PlatformDetail(this.pf, this.spf, this.sis);
 
   PlatformDetail.empty();
 }

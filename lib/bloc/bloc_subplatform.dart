@@ -4,6 +4,10 @@ import 'package:bloc/bloc.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
 import 'package:empty_wallet/db/item_bean.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../main.dart';
+import 'bloc_month.dart';
 
 //A base class provided to be inherited by other event class.
 class SubPlatformEvent {
@@ -30,13 +34,13 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
       switch(event.eventId) {
         //show SubPlatforms.
         case SubPlatformEvent.SHOW_SUBPLATFORMS:
-          var dat = await getSubPlatforms();
-          yield dat;
+          yield await getSubPlatforms();
           break;
         case SubPlatformEvent.CHANGE_PAY_STATE:
           var data = event.data;
           await changePayState(data);
           yield await getSubPlatforms();
+          BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
           break;
       }
     }
@@ -57,6 +61,7 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
     //update SubPlatform
     z2o = sp.isPaidOff == 0;
     z2o ? sp.isPaidOff = 1 : sp.isPaidOff = 0;
+    sp.paidNum = z2o ? sp.numThisStage : 0;
     await updateSubPlatform(sp);
 
     List<Item> items = await getItems(sp.platformKey);
@@ -75,5 +80,10 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
     Platform pf = await getPlatformByName(sp.platformKey);
     pf.paidNum += z2o ? sp.numThisStage : -sp.numThisStage;
     await updatePlatform(pf);
+
+    //update month
+    Month month = await getMonth(sp.monthKey);
+    month.monthTotal -= z2o ? sp.numThisStage : -sp.numThisStage;
+    await updateMonth(month);
   }
 }

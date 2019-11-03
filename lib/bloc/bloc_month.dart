@@ -13,7 +13,6 @@ enum MonthEvent { UPDATE_MONTH }
 
 class MonthBloc extends Bloc<MonthEvent, MonthArgs> {
   @override
-  // TODO: 构造参数既然是Optional，还特么用啥empty。
   MonthArgs get initialState => MonthArgs();
 
   @override

@@ -33,6 +33,7 @@ const CREATE_SUBPLATFORM_TABLE = '''
           monthKey TEXT,
           platformKey TEXT,  
           numThisStage REAL, 
+          paidNum REAL,
           dateThisStage TEXT,
           isPaidOff INT
     )
@@ -55,6 +56,7 @@ const CREATE_SUBITEM_TABLE = '''
           monthKey TEXT,
           numThisStage REAL,
           currentStage INT,
+          totalStages INT,
           isPaidOff INT
     )
     ''';
@@ -152,7 +154,6 @@ Future<HumanLoan> getHlByName(String name) async{
 Future<Platform> getPlatformByName(String name) async{
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(PLATFORM_TABLE_NAME, where: 'platformName = ?', whereArgs: [name]);
-  print('getPf: maps.length: ' + maps.length.toString());
   if(maps.length == 0) {
     return null;
   }
@@ -252,6 +253,13 @@ Future<List<Item>> getItems(String platformKey) async {
 Future<void> updateItem(Item item) async{
   final Database db = await database;
   await db.update(ITEM_TABLE_NAME, item.toMap(), where: 'id = ?', whereArgs: [item.id]);
+}
+
+Future<Item> getItemByName(String name) async{
+  final Database db = await database;
+  List<Map<String, dynamic>> maps = await db.query(ITEM_TABLE_NAME, where: 'itemName = ?', whereArgs: [name]);
+  assert(maps.length == 1, 'getItemByName: maps.length == 1 is not true!');
+  return Item.mapTo(maps[0]);
 }
 
 Future<SubItem> getSubItem(String itemKey, String monthKey) async {

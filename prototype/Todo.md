@@ -1,26 +1,18 @@
-# todo list
+# Todo list
+1.multi-language *
+2.screen adaption *
+3.UI design
 
-### DEL
-- [ ] pay off feature: 
+# snippet
+1. platform detail route -- 修改item paid状态 \ 显示当前stage
+2. month curve -- 提前还款更新month数据
 
-  * change sp's isPaidOff property  to true.
+# FPS influence factor
+- pageview + controller(with setState) 
 
-  * process subPlatforms to a list that only contains sp with a false isPaidOff prop.
+# Experience 
+- prototype really matters.
 
-- [ ] AOT pay off feature: 
-  * 
 
-  
 
-### Product opinion
 
-1. drag main ui to very bottom so than it can show statistic info as much as possible.
-
-# Performance Test
-### Result
-* 2019.10.26 SM701 
-- Curve 30fps
-- card swipe 17fps
-
-### FPS influence element
-- page view + controller(with setState) 
