@@ -15,6 +15,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'advan/localizations.dart';
 import 'bloc/bloc_delegate.dart';
+import 'routes/add_item_route.dart';
 import 'routes/add_platfom_route.dart';
 import 'ui/data_curve.dart';
 
@@ -23,7 +24,7 @@ BuildContext mContext;
 void main() {
   //Bloc事件回调
   BlocSupervisor.delegate = SimpleBlocDelegate();
-  runApp(NewApp());
+  runApp(AddItemRoute());
 }
 
 class NewApp extends StatelessWidget {
