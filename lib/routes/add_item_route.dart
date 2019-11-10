@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:empty_wallet/ui/custom_ui.dart';
 
@@ -45,20 +46,17 @@ class _AddItemHomeState extends State<AddItemHome>
                   Icons.close,
                   color: Colors.white,
                 ),
-                onPressed: () => {
-                  showGeneralDialog(
+                onPressed: () {
+                  showDialog(
                     context: context,
-                    pageBuilder: (_, a1, a2) => SimpleDialog(
+                    builder: (_) => SimpleDialog(
+                      contentPadding: EdgeInsets.all(0.0),
                       children: <Widget>[
-                        Container(
-                          width: 200,
-                          height: 200,
-                          color: Colors.grey,
-                        )
+                        CusDatePicker()
                       ],
                     ),
-                    
-                  )
+                  );
+                  
                 },
               ),
             ),

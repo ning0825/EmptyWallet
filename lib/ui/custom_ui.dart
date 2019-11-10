@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 //Custom Toolbar
@@ -117,5 +118,43 @@ class CusTextField extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class CusDatePicker extends StatefulWidget {
+  final DateTime firstMonth;
+  final DateTime lastMonth;
+  final DateTime initDate;
+
+  final String selectedDate = '';
+
+  CusDatePicker({this.firstMonth, this.lastMonth, this.initDate});
+
+  @override
+  State<StatefulWidget> createState() => CusDatePickerState();
+}
+
+class CusDatePickerState extends State<CusDatePicker> {
+  @override
+  Widget build(BuildContext context) {
+    return _buildPageItme(28, 3);
+  }
+
+  Widget _buildPageItme(int days, int initWeek) {
+    return Container(
+        width: MediaQuery.of(context).size.width,
+        color: Colors.grey[900],
+        child: GridView.builder(
+          shrinkWrap: true,
+          gridDelegate:
+              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7),
+          itemCount: days,
+          itemBuilder: (_, index) {
+            return Container(
+              margin: EdgeInsets.all(8.0),
+              child: CircleAvatar(child: Text(index.toString()), backgroundColor: Colors.grey[700],),
+            );
+          },
+        ));
   }
 }
