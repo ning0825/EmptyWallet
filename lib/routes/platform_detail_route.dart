@@ -99,7 +99,7 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
                 ),
                 Text('总待还' + (s.pf != null ? s.pf.totalNum.toString() : ' ')),
                 Text('本月待还' +
-                    (s.spf != null ? (s.spf.isPaidOff == 0 ? s.spf.numThisStage.toString() : 0.toString()) : ' ')),
+                    (s.spf != null ? (s.spf.isPaidOff == 0 ? (s.spf.numThisStage - s.spf.paidNum).toString() : 0.toString()) : ' ')),
                 Expanded(
                     child: s.sis != null
                         ? ListView.builder(
@@ -109,7 +109,7 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
                                 title: Text(s.sis[i].numThisStage.toString()),
                                 subtitle: Text(s.sis[i].currentStage.toString() + '/' + s.sis[i].totalStages.toString()),
                                 trailing: IconButton(icon: Icon(Icons.add, color: s.sis[i].isPaidOff == 0 ? Colors.redAccent : Colors.greenAccent,), onPressed: (){
-                                    _pdBloc.add(PlatformDetailEvent(methodId: PlatformDetailEvent.CHANGE_ITEM_STATE, subItem: s.sis[i]));
+                                    _pdBloc.add(PlatformDetailEvent(methodId: PlatformDetailEvent.CHANGE_ITEM_STATE, subItem: s.sis[i], pf: pf));
                                 }),
                                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ItemDetailRoute(s.sis[i]))),
                               );

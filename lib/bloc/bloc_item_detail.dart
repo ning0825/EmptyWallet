@@ -32,11 +32,6 @@ class ItemDetailBloc extends Bloc<ItemDetailEvent, List<SubItem>> {
       case ItemDetailEvent.CHANGE_SUBITEM_STATE:
         yield await changeSubItemState(event.data);
         //update PlatformDetailRoute
-        BlocProvider.of<PlatformDetailBloc>(pdrContext).add(PlatformDetailEvent(methodId: PlatformDetailEvent.SHOW_PLATFORM_DETAIL));
-        //update main
-        BlocProvider.of<SubPlatformBloc>(mContext)
-            .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
-        BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
         break;
     }
   }
@@ -72,6 +67,12 @@ class ItemDetailBloc extends Bloc<ItemDetailEvent, List<SubItem>> {
     Month month = await getMonth(subItem.monthKey);
     month.monthTotal += z2o ? -subItem.numThisStage : subItem.numThisStage;
     await updateMonth(month);
+
+    BlocProvider.of<PlatformDetailBloc>(pdrContext).add(PlatformDetailEvent(methodId: PlatformDetailEvent.SHOW_PLATFORM_DETAIL));
+    //update main
+    BlocProvider.of<SubPlatformBloc>(mContext)
+        .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
+    BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
 
     return await getSubItems(item.itemName);
   }

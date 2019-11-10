@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:bloc/bloc.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
 import 'package:empty_wallet/db/item_bean.dart';
@@ -60,8 +59,14 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
 
     //update SubPlatform
     z2o = sp.isPaidOff == 0;
+
+    //update month
+    Month month = await getMonth(sp.monthKey);
+    month.monthTotal -= z2o ? (sp.numThisStage - sp.paidNum) : -sp.paidNum;
+    await updateMonth(month);
+
     z2o ? sp.isPaidOff = 1 : sp.isPaidOff = 0;
-    sp.paidNum = z2o ? sp.numThisStage : 0;
+    sp.paidNum += z2o ? (sp.numThisStage - sp.paidNum) : -sp.paidNum;
     await updateSubPlatform(sp);
 
     List<Item> items = await getItems(sp.platformKey);
@@ -78,12 +83,9 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
 
     //update platform
     Platform pf = await getPlatformByName(sp.platformKey);
-    pf.paidNum += z2o ? sp.numThisStage : -sp.numThisStage;
+    pf.paidNum += z2o ? (sp.numThisStage - sp.paidNum) : -sp.numThisStage;
     await updatePlatform(pf);
 
-    //update month
-    Month month = await getMonth(sp.monthKey);
-    month.monthTotal -= z2o ? sp.numThisStage : -sp.numThisStage;
-    await updateMonth(month);
+
   }
 }

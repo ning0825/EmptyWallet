@@ -82,7 +82,6 @@ class CusTextField extends StatelessWidget {
   final String hintText;
   final TextInputType keyboardType;
 
-
   CusTextField({this.title, this.onSaved, this.validator, this.hintText, this.keyboardType});
 
   @override
@@ -90,20 +89,21 @@ class CusTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Padding(
-            padding: EdgeInsets.only(top: 26, bottom: 10),
-            child: Text(
-              title,
-              style: TextStyle(
-                  color: Colors.grey, fontSize: 24),
-            )),
+//        Padding(
+//            padding: EdgeInsets.only(top: 26, bottom: 10),
+//            child: Text(
+//              title,
+//              style: TextStyle(
+//                  color: Colors.grey, fontSize: 24),
+//            )),
         TextFormField(
             decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(),
-              hintText: hintText
+              labelText: title,
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3)),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3)),
+              labelStyle: TextStyle(color: Colors.black),
             ),
+            cursorColor: Colors.black,
             keyboardType:keyboardType,
             onSaved: onSaved,
             validator: validator),

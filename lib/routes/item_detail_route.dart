@@ -1,15 +1,10 @@
 import 'package:empty_wallet/bloc/bloc_item_detail.dart';
-import 'package:empty_wallet/bloc/bloc_month.dart';
-import 'package:empty_wallet/bloc/bloc_platform_detail.dart';
-import 'package:empty_wallet/bloc/bloc_subplatform.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
 import 'package:empty_wallet/db/item_bean.dart';
-import 'package:empty_wallet/routes/platform_detail_route.dart';
 import 'package:empty_wallet/ui/custom_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../main.dart';
 
 BuildContext idrContext;
 SubItem mSubItem;
@@ -43,7 +38,6 @@ class _ItemDetailHomeState extends State<ItemDetailHome> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _itemDetailBloc = BlocProvider.of<ItemDetailBloc>(context);
     _showSubItems();

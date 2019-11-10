@@ -41,7 +41,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         break;
       case PlatformDetailEvent.CHANGE_ITEM_STATE:
         await _changeItemState(event.subItem);
-        yield await getPlatformDetail(event.itemAddArgs.platform);
+        yield await getPlatformDetail(event.pf);
         BlocProvider.of<SubPlatformBloc>(mContext)
             .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
         BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
@@ -70,7 +70,9 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         platformKey: iaas.platform.platformName,
         stageNum: iaas.itemSN,
         numPerStage: iaas.itemNPS,
-        itemName: itemTag));
+        itemName: itemTag,
+        dueDate:
+            iaas.platform.dueDate)); //todo 加个itemDD，加个开关，是否是platform的duedate
 
     var nowTime = DateTime.now();
 
@@ -83,7 +85,8 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
           monthKey: s,
           numThisStage: iaas.itemNPS,
           currentStage: i + 1,
-          totalStages: iaas.itemSN));
+          totalStages: iaas.itemSN,
+          dueDay: s + '.' + iaas.platform.dueDate));
 
       //UpdateMonth
       Month m = await getMonth(s);
@@ -99,7 +102,6 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
       var sp = await getSubPlatform(iaas.platform.platformName, s);
       sp.numThisStage += iaas.itemNPS;
       updateSubPlatform(sp);
-
       nowTime =
           nowTime.add(Duration(days: dayInMonth(nowTime.year, nowTime.month)));
     }
@@ -125,7 +127,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         await getSubPlatform(item.platformKey, subItem.monthKey);
     subPlatform.paidNum += z2o ? subItem.numThisStage : -subItem.numThisStage;
 
-    List<Item> items = await getItems(subItem.itemKey);
+    List<Item> items = await getItems(subPlatform.platformKey);
     List<SubItem> subItems = [];
     int paidOffThisSubPlatform = 1;
     for (var o in items) {
@@ -147,7 +149,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
 
     //update month
     Month month = await getMonth(subItem.monthKey);
-    month.monthTotal += z2o ? subItem.numThisStage : -subItem.numThisStage;
+    month.monthTotal -= z2o ? subItem.numThisStage : -subItem.numThisStage;
     await updateMonth(month);
   }
 }

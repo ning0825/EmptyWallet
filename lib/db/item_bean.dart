@@ -114,6 +114,7 @@ class Item {
   String itemName;
   int paidStageNum;
   int currentStage;
+  String dueDate;
 
   Item(
       {this.id,
@@ -121,6 +122,7 @@ class Item {
       @required this.stageNum,
       @required this.numPerStage,
       @required this.itemName,
+      @required this.dueDate,
       this.paidStageNum = 0,
       this.currentStage = 1});
 
@@ -131,7 +133,8 @@ class Item {
       'numPerStage': numPerStage,
       'itemName': itemName,
       'paidStageNum': paidStageNum,
-      'currentStage': currentStage
+      'currentStage': currentStage,
+      'dueDate': dueDate
     };
   }
 
@@ -143,12 +146,13 @@ class Item {
         numPerStage: map['numPerStage'],
         itemName: map['itemName'],
         paidStageNum: map['paidStageNum'],
-        currentStage: map['currentStage']);
+        currentStage: map['currentStage'],
+        dueDate: map['dueDate']);
   }
 
   @override
   String toString() {
-    return 'Item Info: id:[$id], platformKey:[$platformKey], stageNum:[$stageNum], numPerStage:[$numPerStage], itemName:[$itemName], paidStageNum:[$paidStageNum], currentStage: [$currentStage]';
+    return 'Item Info: id:[$id], platformKey:[$platformKey], stageNum:[$stageNum], numPerStage:[$numPerStage], itemName:[$itemName], paidStageNum:[$paidStageNum], currentStage: [$currentStage], dueDate: [$dueDate]';
   }
 }
 
@@ -159,6 +163,7 @@ class SubItem {
   double numThisStage;
   int currentStage;
   int totalStages;
+  String dueDay;
   int isPaidOff;
 
   SubItem(
@@ -168,6 +173,7 @@ class SubItem {
       @required this.numThisStage,
       @required this.currentStage,
       @required this.totalStages,
+      @required this.dueDay,
       this.isPaidOff = 0});
 
   Map<String, dynamic> toMap() {
@@ -177,6 +183,7 @@ class SubItem {
       'numThisStage': numThisStage,
       'currentStage': currentStage,
       'totalStages': totalStages,
+      'dueDay': dueDay,
       'isPaidOff': isPaidOff
     };
   }
@@ -189,12 +196,13 @@ class SubItem {
         numThisStage: map['numThisStage'],
         currentStage: map['currentStage'],
         totalStages: map['totalStages'],
+        dueDay: map['dueDay'],
         isPaidOff: map['isPaidOff']);
   }
 
   @override
   String toString() {
-    return 'SubItem Info: id:[$id], itemKey:[$itemKey], monthKey:[$monthKey], numThisStage:[$numThisStage], currentStage:[$currentStage], totalStages:[$totalStages], isPaidOff: [$isPaidOff]';
+    return 'SubItem Info: id:[$id], itemKey:[$itemKey], monthKey:[$monthKey], numThisStage:[$numThisStage], currentStage:[$currentStage], totalStages:[$totalStages], dueDay: [$dueDay], isPaidOff: [$isPaidOff]';
   }
 }
 

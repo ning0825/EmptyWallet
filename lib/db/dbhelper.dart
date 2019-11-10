@@ -46,7 +46,8 @@ const CREATE_ITEM_TABLE = '''
           stageNum INT,
           numPerStage REAL,
           paidStageNum INT,
-          currentStage INT
+          currentStage INT,
+          dueDate TEXT
     )
 ''';
 const CREATE_SUBITEM_TABLE = '''
@@ -57,7 +58,8 @@ const CREATE_SUBITEM_TABLE = '''
           numThisStage REAL,
           currentStage INT,
           totalStages INT,
-          isPaidOff INT
+          isPaidOff INT,
+          dueDay TEXT
     )
     ''';
 const CREATE_HUMANLOAN_TABLE = '''

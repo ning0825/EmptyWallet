@@ -24,7 +24,6 @@ class _DataCurveHomeState extends State<DataCurveHome> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
   }
   @override

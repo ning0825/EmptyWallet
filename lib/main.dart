@@ -4,7 +4,6 @@ import 'package:empty_wallet/bloc/bloc_month.dart';
 import 'package:empty_wallet/bloc/bloc_subplatform.dart';
 import 'package:empty_wallet/db/item_bean.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
-import 'package:empty_wallet/routes/add_human_loan_route.dart';
 import 'package:empty_wallet/routes/human_detail_route.dart';
 import 'package:empty_wallet/routes/platform_detail_route.dart';
 import 'package:empty_wallet/ui/bottom_drag.dart';
@@ -13,15 +12,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'advan/localizations.dart';
 import 'bloc/bloc_delegate.dart';
 import 'routes/add_platfom_route.dart';
 import 'ui/data_curve.dart';
 
-//提供一个context给platform_detail_route界面获取bloc用
 BuildContext mContext;
-//
-//List<double> dataArray = [];
-//List<String> monthArray = [];
 
 void main() {
   //Bloc事件回调
@@ -33,6 +30,15 @@ class NewApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        const EwLocalizationDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate
+      ],
+      supportedLocales: [
+        const Locale('en'),
+        const Locale('zh')
+      ],
       debugShowCheckedModeBanner: false,
       home: BlocProvider<SubPlatformBloc>(
         builder: (_) => SubPlatformBloc(),
@@ -54,6 +60,7 @@ class NewApp extends StatelessWidget {
 class NewHome extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
+
     return NewHomeState();
   }
 }
@@ -114,7 +121,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                   EdgeInsets.only(top: 20, left: 30, right: 30, bottom: 20),
               child: SafeArea(
                 child: CusToolbar(
-                  title: '-bank',
+                  title: EwLocalizations.of(context).title,
                   leftIcon: Icons.menu,
                   leftOnPress: () => {},
                 ),
@@ -199,8 +206,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                         currentCardPosition = index;
                         setState(() {});
                         _animationController.forward(from: 0.0);
-                      }
-                      ),
+                      }),
                 ),
                 Padding(
                   padding:
@@ -215,18 +221,21 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                       Spacer(),
                       IconButton(
                         icon: Icon(Icons.add),
+//                        onPressed: () {
+//                          if (currentCardPosition == 0) {
+//                            Navigator.push(
+//                                context,
+//                                MaterialPageRoute(
+//                                    builder: (context) => AddPlatformRoute()));
+//                          } else if (currentCardPosition == 1) {
+//                            Navigator.push(
+//                                context,
+//                                MaterialPageRoute(
+//                                    builder: (context) => AddHumanLoanRoute()));
+//                          }
+//                        },
                         onPressed: () {
-                          if (currentCardPosition == 0) {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => AddPlatformRoute()));
-                          } else if (currentCardPosition == 1) {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => AddHumanLoanRoute()));
-                          }
+                          //todo 修改语言
                         },
                       )
                     ],
@@ -276,8 +285,11 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => PlatformDetailRoute.sub(subPlatforms[index])));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      PlatformDetailRoute.sub(subPlatforms[index])));
         },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,8 +300,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                 children: <Widget>[
                   Text(
                     subPlatforms[index].platformKey,
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
@@ -299,18 +310,22 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
               ),
             ),
             Expanded(
-              child: Text(subPlatforms[index].numThisStage.toString()),
+              child: Text((subPlatforms[index].numThisStage -
+                      subPlatforms[index].paidNum)
+                  .toString()),
             ),
             IconButton(
               icon: Icon(
                 Icons.confirmation_number,
                 size: 30,
-                color: subPlatforms[index].isPaidOff == 0 ? Colors.redAccent : Colors.greenAccent,
+                color: subPlatforms[index].isPaidOff == 0
+                    ? Colors.redAccent
+                    : Colors.greenAccent,
               ),
-              onPressed: (){
-                BlocProvider.of<SubPlatformBloc>(context)
-                    .add(SubPlatformEvent(eventId: SubPlatformEvent.CHANGE_PAY_STATE, data: subPlatforms[index]));
-
+              onPressed: () {
+                BlocProvider.of<SubPlatformBloc>(context).add(SubPlatformEvent(
+                    eventId: SubPlatformEvent.CHANGE_PAY_STATE,
+                    data: subPlatforms[index]));
               },
               padding: EdgeInsets.all(2),
             )
@@ -372,7 +387,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     oweRemain = 0.0;
     for (var o in subPlatforms) {
       oweTotal += o.numThisStage;
-      if(o.isPaidOff == 1) {
+      if (o.isPaidOff == 1) {
         owePaid += o.numThisStage;
       } else {
         owePaid += o.paidNum;
@@ -393,8 +408,14 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
           '￥$oweRemain',
           style: TextStyle(color: Colors.white, fontSize: 50),
         ),
-        Text('total: ' + oweTotal.toString(),style: TextStyle(color: Colors.white),),
-        Text('paid: ' + owePaid.toString(),style: TextStyle(color: Colors.white),)
+        Text(
+          'total: ' + oweTotal.toString(),
+          style: TextStyle(color: Colors.white),
+        ),
+        Text(
+          'paid: ' + owePaid.toString(),
+          style: TextStyle(color: Colors.white),
+        )
       ],
     ));
   }

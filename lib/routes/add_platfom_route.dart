@@ -1,3 +1,4 @@
+import 'package:empty_wallet/advan/localizations.dart';
 import 'package:empty_wallet/db/item_bean.dart';
 import 'package:empty_wallet/routes/platform_detail_route.dart';
 import 'package:empty_wallet/ui/custom_ui.dart';
@@ -37,13 +38,13 @@ class EditItemState extends State<EditItemHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffordKey,
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       body: Column(
         children: <Widget>[
           Padding(
             padding: EdgeInsets.only(top: 20, left: 30, right: 30, bottom: 20),
             child: CusToolbar(
-              title: 'Add',
+              title: EwLocalizations.of(mContext).title,
               leftIcon: Icons.close,
               leftOnPress: () => Navigator.pop(mContext),
               rightIcon: Icons.save,
