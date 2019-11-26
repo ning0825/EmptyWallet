@@ -30,39 +30,43 @@ class _DragContainerState extends State<DragContainer>
   double currentDis;
   double bottomDis;
 
-  AnimationController _animationController;
+  AnimationController _downAnimController;
   CurvedAnimation animation;
 
-  AnimationController _animationController2;
+  AnimationController _upAnimController;
   CurvedAnimation animation22;
 
   bool isEdge = false;
   bool isExpanded = true;
 
+  Curve curveType;
+  //上拉和下滑的动画时长
+  Duration dur;
+
   @override
   void initState() {
     super.initState();
 
-    var curveType = Curves.easeOut;
-    var dur = 250;
+    curveType = Curves.easeOut;
+    dur = Duration(milliseconds: 250);
 
     WidgetsBinding.instance
         .addPostFrameCallback((d) => bottomDis = context.size.height - 50);
 
     //下滑动画
-    _animationController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: dur));
-    animation = CurvedAnimation(parent: _animationController, curve: curveType);
+    _downAnimController =
+        AnimationController(vsync: this, duration: dur);
+    animation = CurvedAnimation(parent: _downAnimController, curve: curveType);
     animation.addListener(() {
       topDis = currentDis + (bottomDis - currentDis).abs() * animation.value;
       setState(() {});
     });
 
     //上拉动画
-    _animationController2 =
-        AnimationController(vsync: this, duration: Duration(milliseconds: dur));
+    _upAnimController =
+        AnimationController(vsync: this, duration: dur);
     animation22 =
-        CurvedAnimation(parent: _animationController2, curve: curveType);
+        CurvedAnimation(parent: _upAnimController, curve: curveType);
     animation22.addListener(() {
       topDis = currentDis - currentDis * animation22.value;
       setState(() {});
@@ -109,11 +113,11 @@ class _DragContainerState extends State<DragContainer>
               if (isEdge) {
                 currentDis = topDis;
                 if (topDis > flHeight / 5) {
-                  _animationController.forward(from: 0.0);
+                  _downAnimController.forward(from: 0.0);
                   isEdge = false;
                   isExpanded = false;
                 } else {
-                  _animationController2.forward(from: 0.0);
+                  _upAnimController.forward(from: 0.0);
                   isEdge = false;
                   isExpanded = true;
                 }
@@ -138,9 +142,8 @@ class _DragContainerState extends State<DragContainer>
                 setState(() {});
               },
               onVerticalDragEnd: (d) {
-                print('_DragContainerState.build' "ANIMATION_TO_UP");
                 currentDis = topDis;
-                _animationController2.forward(from: 0.0);
+                _upAnimController.forward(from: 0.0);
                 isExpanded = true;
               },
             ),
@@ -175,14 +178,12 @@ class _DragContainerState extends State<DragContainer>
 
   void _handleEnd(DragEndDetails ded) {
     if (topDis > flHeight / 5) {
-      log('topdis > middis, to botttom');
       currentDis = topDis;
-      _animationController.forward(from: 0.0);
+      _downAnimController.forward(from: 0.0);
       isExpanded = false;
     } else {
-      log('topdis < middis, to up');
       currentDis = topDis;
-      _animationController2.forward(from: 0.0);
+      _upAnimController.forward(from: 0.0);
       isExpanded = true;
     }
   }

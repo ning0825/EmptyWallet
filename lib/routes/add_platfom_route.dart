@@ -32,13 +32,13 @@ class EditItemState extends State<EditItemHome> {
   //平台名称
   String name;
   //还款日
-  String dueDate;
+  // String dueDate;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffordKey,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       body: Column(
         children: <Widget>[
           Padding(
@@ -47,13 +47,6 @@ class EditItemState extends State<EditItemHome> {
               title: EwLocalizations.of(mContext).title,
               leftIcon: Icons.close,
               leftOnPress: () => Navigator.pop(mContext),
-              rightIcon: Icons.save,
-              rightOnPress: () {
-                if ((_key.currentState as FormState).validate()) {
-                  (_key.currentState as FormState).save();
-                  saveAndGo();
-                }
-              },
             ),
           ),
           Expanded(
@@ -73,18 +66,37 @@ class EditItemState extends State<EditItemHome> {
                               CusTextField(
                                 title: 'Name',
                                 onSaved: (s) => name = s,
-                                validator: (s) => s.isEmpty
-                                    ? 'Please input name'
-                                    : null,
+                                validator: (s) =>
+                                    s.isEmpty ? 'Please input name' : null,
                               ),
-                              CusTextField(
-                                title: 'dueDate',
-                                onSaved: (s) => dueDate = s,
-                                validator: (s) => (!(int.parse(s) > 0 &&
-                                    (int.parse(s) < 32))
-                                    ? 'dueDate must be between 1 and 31'
-                                    : null),
+                              Container(
+                                height: 25,
                               ),
+                              AnimScaleButton(
+                                child: Container(
+                                  width: 150,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.horizontal(
+                                        left: Radius.circular(40),
+                                        right: Radius.circular(40)),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'save',
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 22),
+                                  ),
+                                ),
+                                onTap: () {
+                                  if ((_key.currentState as FormState)
+                                      .validate()) {
+                                    (_key.currentState as FormState).save();
+                                    saveAndGo();
+                                  }
+                                },
+                              )
                             ],
                           ),
                         ),
@@ -104,14 +116,15 @@ class EditItemState extends State<EditItemHome> {
     var pfInDB = await getPlatformByName(name);
     if (pfInDB != null) {
       var snackbar = SnackBar(
-          content: Text('A platform contains this name already existed, please check the name'),
+          content: Text(
+              'A platform contains this name already existed, please check the name'),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating);
       (_scaffordKey.currentState as ScaffoldState).showSnackBar(snackbar);
       return;
     }
 
-    var p = Platform(platformName: name, dueDate: dueDate);
+    var p = Platform(platformName: name);
     int i = await insertDate(p);
     p.id = i;
     Navigator.of(mContext)

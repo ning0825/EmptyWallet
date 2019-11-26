@@ -32,6 +32,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
       case PlatformDetailEvent.SHOW_PLATFORM_DETAIL:
         yield await getPlatformDetail(event.pf);
         break;
+
       case PlatformDetailEvent.ADD_ITEM:
         await _addItem(event.itemAddArgs);
         yield await getPlatformDetail(event.itemAddArgs.platform);
@@ -39,6 +40,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
             .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
         BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
         break;
+
       case PlatformDetailEvent.CHANGE_ITEM_STATE:
         await _changeItemState(event.subItem);
         yield await getPlatformDetail(event.pf);
@@ -57,7 +59,10 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
     var items = await getItems(pf.platformName);
     List<SubItem> subItems = [];
     for (var o in items) {
-      subItems.add(await getSubItem(o.itemName, subPlatform.monthKey));
+      var si = await getSubItem(o.itemName, subPlatform.monthKey);
+      if (si != null) {
+        subItems.add(si);
+      }
     }
     return PlatformDetail(pf, subPlatform, subItems);
   }
@@ -74,7 +79,10 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         dueDate:
             iaas.platform.dueDate)); //todo 加个itemDD，加个开关，是否是platform的duedate
 
-    var nowTime = DateTime.now();
+    List<String> firstDateList = iaas.firstDate.split('.');
+
+    var nowTime = DateTime(int.parse(firstDateList[0]),
+        int.parse(firstDateList[1]), int.parse(firstDateList[2]));
 
     for (int i = 0; i < iaas.itemSN; i++) {
       var s = nowTime.year.toString() + '.' + nowTime.month.toString();
@@ -86,7 +94,11 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
           numThisStage: iaas.itemNPS,
           currentStage: i + 1,
           totalStages: iaas.itemSN,
-          dueDay: s + '.' + iaas.platform.dueDate));
+          dueDay: nowTime.year.toString() +
+              '.' +
+              nowTime.month.toString() +
+              '.' +
+              nowTime.day.toString()));
 
       //UpdateMonth
       Month m = await getMonth(s);

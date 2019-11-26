@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:empty_wallet/bloc/bloc_human.dart';
 import 'package:empty_wallet/bloc/bloc_month.dart';
+import 'package:empty_wallet/bloc/bloc_platform.dart';
 import 'package:empty_wallet/bloc/bloc_subplatform.dart';
 import 'package:empty_wallet/db/item_bean.dart';
 import 'package:empty_wallet/db/dbhelper.dart';
@@ -15,7 +16,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'advan/localizations.dart';
 import 'bloc/bloc_delegate.dart';
-import 'routes/add_item_route.dart';
+import 'routes/add_human_loan_route.dart';
 import 'routes/add_platfom_route.dart';
 import 'ui/data_curve.dart';
 
@@ -24,7 +25,7 @@ BuildContext mContext;
 void main() {
   //Bloc事件回调
   BlocSupervisor.delegate = SimpleBlocDelegate();
-  runApp(AddItemRoute());
+  runApp(NewApp());
 }
 
 class NewApp extends StatelessWidget {
@@ -36,18 +37,15 @@ class NewApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate
       ],
-      supportedLocales: [
-        const Locale('en'),
-        const Locale('zh')
-      ],
-      debugShowCheckedModeBanner: false,
+      supportedLocales: [const Locale('en'), const Locale('zh')],
       home: BlocProvider<SubPlatformBloc>(
         builder: (_) => SubPlatformBloc(),
         child: BlocProvider<HumanBloc>(
           builder: (_) => HumanBloc(),
           child: BlocProvider<MonthBloc>(
             builder: (_) => MonthBloc(),
-            child: NewHome(),
+            child: BlocProvider<PfRemainBloc>(
+                builder: (_) => PfRemainBloc(), child: NewHome()),
           ),
         ),
       ),
@@ -61,7 +59,6 @@ class NewApp extends StatelessWidget {
 class NewHome extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
-
     return NewHomeState();
   }
 }
@@ -70,16 +67,13 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   //当前月的subPlatform列表
   List<SubPlatform> subPlatforms = List();
 
-//Human load list.
+  //Human load list.
   List<HumanLoan> humanLoans = List();
 
   var cards;
 
   var currentPage = 0.0;
   var currentCardPosition = 0;
-
-  AnimationController _animationController;
-  Animation<double> showAnimation;
 
   GlobalKey key = GlobalKey();
 
@@ -95,21 +89,16 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
+    mContext = context;
+
     openDB().whenComplete(() {
       BlocProvider.of<HumanBloc>(context)
           .add(HumanEvent(methodId: HumanEvent.SHOW_HUMAN_LOAN));
       BlocProvider.of<SubPlatformBloc>(context)
           .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
       BlocProvider.of<MonthBloc>(context).add(MonthEvent.UPDATE_MONTH);
+      BlocProvider.of<PfRemainBloc>(context).add(PfRemainEvent.SHOW_PF_REMAIN);
     });
-
-    mContext = context;
-
-    //列表逐渐显示的动画
-    _animationController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 780));
-    showAnimation = Tween(begin: 0.0, end: 1.0).animate(_animationController);
-    _animationController.forward(from: 0.0);
   }
 
   @override
@@ -129,9 +118,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
               )),
           Expanded(
             child: MockBottomDrag(
-              bl: BlocBuilder<MonthBloc, MonthArgs>(builder: (context, s) {
-                return DataCurveWidget(s.dataList, s.monthList);
-              }),
+              bl: _buildBackLayer(),
               fl: Container(
                 key: flKey,
                 decoration: BoxDecoration(
@@ -148,6 +135,50 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
         ],
       ),
       backgroundColor: Colors.black,
+    );
+  }
+
+  Widget _buildBackLayer() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          //各个平台的剩余待还，以及总待还
+          Text(
+            'total',
+            style: TextStyle(color: Colors.white),
+          ),
+          BlocBuilder<PfRemainBloc, List<Platform>>(
+            builder: (_, s) {
+              return GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+                shrinkWrap: true,
+                itemCount: s.length,
+                itemBuilder: (_, i) {
+                  return Container(
+                    height: 80,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.all(10),
+                    margin: EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.grey[600], borderRadius: BorderRadius.all(Radius.circular(20))),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(s[i].paidNum.toString(), style: TextStyle(color: Colors.white, fontSize: 40),),
+                        Text(s[i].platformName, style: TextStyle(color: Colors.white),),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
+          BlocBuilder<MonthBloc, MonthArgs>(builder: (context, s) {
+            return DataCurveWidget(s.dataList, s.monthList);
+          }),
+        ],
+      ),
     );
   }
 
@@ -205,13 +236,11 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                       controller: _controller,
                       onPageChanged: (index) {
                         currentCardPosition = index;
-                        setState(() {});
-                        _animationController.forward(from: 0.0);
                       }),
                 ),
                 Padding(
                   padding:
-                      EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 40),
+                      EdgeInsets.only(left: 40, top: 10, bottom: 0, right: 40),
                   child: Row(
                     children: <Widget>[
                       Text(
@@ -222,21 +251,18 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                       Spacer(),
                       IconButton(
                         icon: Icon(Icons.add),
-//                        onPressed: () {
-//                          if (currentCardPosition == 0) {
-//                            Navigator.push(
-//                                context,
-//                                MaterialPageRoute(
-//                                    builder: (context) => AddPlatformRoute()));
-//                          } else if (currentCardPosition == 1) {
-//                            Navigator.push(
-//                                context,
-//                                MaterialPageRoute(
-//                                    builder: (context) => AddHumanLoanRoute()));
-//                          }
-//                        },
                         onPressed: () {
-                          //todo 修改语言
+                          if (currentCardPosition == 0) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AddPlatformRoute()));
+                          } else if (currentCardPosition == 1) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AddHumanLoanRoute()));
+                          }
                         },
                       )
                     ],
@@ -253,39 +279,38 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
 
 //显示是owe list 还是 Loan list
   Widget getCurrentList(int index) {
-    if (index == 0) {
-      return FadeTransition(
-        child: ListView.builder(
-            primary: false,
-            shrinkWrap: true,
-            itemBuilder: (context, index) {
-              return oweTileWidget(index);
-            },
-            itemCount: subPlatforms.length),
-        opacity: showAnimation,
-      );
-    } else if (index != 0) {
-      return FadeTransition(
-        child: ListView.builder(
-            primary: false,
-            shrinkWrap: true,
-            itemBuilder: (context, index) {
-              return loanTileWidget(index);
-            },
-            itemCount: humanLoans.length),
-        opacity: showAnimation,
-      );
-    }
-    return Text('index != neither 0 nor 1 ');
+    return AnimatedCrossFade(
+      crossFadeState:
+          index == 0 ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      duration: Duration(milliseconds: 500),
+      firstChild: ListView.builder(
+          primary: false,
+          shrinkWrap: true,
+          padding: EdgeInsets.all(0.0),
+          itemBuilder: (context, index) {
+            return oweTileWidget(index);
+          },
+          itemCount: subPlatforms.length),
+      secondChild: ListView.builder(
+          primary: false,
+          shrinkWrap: true,
+          padding: EdgeInsets.all(0.0),
+          itemBuilder: (context, index) {
+            return loanTileWidget(index);
+          },
+          itemCount: humanLoans.length),
+    );
   }
 
 //列表【0】Item
   Widget oweTileWidget(int index) {
+    print(subPlatforms.toString());
     return Padding(
       padding: EdgeInsets.only(left: 40, top: 10, bottom: 10, right: 30),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
+          print(index.toString() + '88888888888888888888888888888');
           Navigator.push(
               context,
               MaterialPageRoute(
@@ -293,7 +318,7 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
                       PlatformDetailRoute.sub(subPlatforms[index])));
         },
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Expanded(
               child: Column(
@@ -409,9 +434,12 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
           '￥$oweRemain',
           style: TextStyle(color: Colors.white, fontSize: 50),
         ),
-        Text(
-          'total: ' + oweTotal.toString(),
-          style: TextStyle(color: Colors.white),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
+          child: Text(
+            'total: ' + oweTotal.toString(),
+            style: TextStyle(color: Colors.white),
+          ),
         ),
         Text(
           'paid: ' + owePaid.toString(),

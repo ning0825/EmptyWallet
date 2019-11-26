@@ -68,7 +68,7 @@ class ItemDetailBloc extends Bloc<ItemDetailEvent, List<SubItem>> {
     month.monthTotal += z2o ? -subItem.numThisStage : subItem.numThisStage;
     await updateMonth(month);
 
-    BlocProvider.of<PlatformDetailBloc>(pdrContext).add(PlatformDetailEvent(methodId: PlatformDetailEvent.SHOW_PLATFORM_DETAIL));
+    BlocProvider.of<PlatformDetailBloc>(pdrContext).add(PlatformDetailEvent(methodId: PlatformDetailEvent.SHOW_PLATFORM_DETAIL, pf: platform));
     //update main
     BlocProvider.of<SubPlatformBloc>(mContext)
         .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));

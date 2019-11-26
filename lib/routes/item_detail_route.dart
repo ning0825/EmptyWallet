@@ -5,7 +5,6 @@ import 'package:empty_wallet/ui/custom_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 BuildContext idrContext;
 SubItem mSubItem;
 //List<SubItem> subItems = [];
@@ -65,7 +64,7 @@ class _ItemDetailHomeState extends State<ItemDetailHome> {
               Expanded(
                 child: BlocBuilder<ItemDetailBloc, List<SubItem>>(
                   builder: (_, subItems) {
-                    if(subItems.length == 0) {
+                    if (subItems.length == 0) {
                       return Container();
                     }
                     return ListView.builder(
@@ -74,7 +73,8 @@ class _ItemDetailHomeState extends State<ItemDetailHome> {
                         itemBuilder: (context, index) => ListTile(
                               leading: Text(
                                 subItems[index].numThisStage.toString(),
-                                style: TextStyle(color: subItems[index].isPaidOff == 0 ? Colors.redAccent : Colors.white),
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 24),
                               ),
                               title:
                                   Text(subItems[index].monthKey, style: style),
@@ -84,19 +84,30 @@ class _ItemDetailHomeState extends State<ItemDetailHome> {
                                     subItems.length.toString(),
                                 style: style,
                               ),
-                              trailing: IconButton(
-                                icon: Icon(
-                                  Icons.adb,
-                                  color: Colors.white,
+                              trailing: AnimScaleButton(
+                                child: Container(
+                                  width: 50,
+                                  height: 30,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      color: subItems[index].isPaidOff == 0
+                                          ? Colors.red
+                                          : Colors.green,
+                                      borderRadius: BorderRadius.horizontal(
+                                          left: Radius.circular(20),
+                                          right: Radius.circular(20))),
+                                  child: Text(
+                                    subItems[index].isPaidOff == 0
+                                        ? 'pay'
+                                        : 'paid',
+                                    style: style,
+                                  ),
                                 ),
-                                onPressed: () {
-                                  //update ItemDetailRoute
-                                  _itemDetailBloc.add(
-                                      ItemDetailEvent(
-                                          methodId: ItemDetailEvent
-                                              .CHANGE_SUBITEM_STATE,
-                                          data: subItems[index]));
-                                }
+                                onTap: () => _itemDetailBloc.add(
+                                    ItemDetailEvent(
+                                        methodId: ItemDetailEvent
+                                            .CHANGE_SUBITEM_STATE,
+                                        data: subItems[index])),
                               ),
                             ));
                   },

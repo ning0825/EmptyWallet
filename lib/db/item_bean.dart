@@ -31,7 +31,7 @@ class Platform {
 
   Platform(
       {@required this.platformName,
-      @required this.dueDate,
+      this.dueDate = '',
       this.totalNum = 0.0,
       this.paidNum = 0.0,
       this.id});
@@ -300,10 +300,11 @@ class ItemAddArgs {
   Platform platform;
   SubPlatform subPlatform;
   int itemSN; //分期数
-  double itemNPS;
+  double itemNPS; //每期金额
+  String firstDate;//首次还款
 
   ItemAddArgs(
-      this.platform, this.subPlatform, this.itemSN, this.itemNPS); //每期数目
+      this.platform, this.subPlatform, this.itemSN, this.itemNPS, this.firstDate); 
 
   ItemAddArgs.empty();
 }
