@@ -71,25 +71,25 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
   List<HumanLoan> humanLoans = List();
 
   var cards;
-
   var currentPage = 0.0;
   var currentCardPosition = 0;
-
-  GlobalKey key = GlobalKey();
-
-  GlobalKey flKey = GlobalKey();
-
-  var _controller = PageController(viewportFraction: 0.85);
-
   var oweTotal = 0.0;
   var owePaid = 0.0;
   var oweRemain = 0.0;
+
+  GlobalKey key = GlobalKey();
+  GlobalKey flKey = GlobalKey();
+
+  var _controller = PageController(viewportFraction: 0.85);
 
   @override
   void initState() {
     super.initState();
 
     mContext = context;
+
+    _controller
+        .addListener(() => setState(() => currentPage = _controller.page));
 
     openDB().whenComplete(() {
       BlocProvider.of<HumanBloc>(context)
@@ -138,42 +138,86 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     );
   }
 
+  List<int> colors = const [
+    0xfff65c78,
+    0xffffd271,
+    0xffc3f584,
+    0xff46b3e6,
+    0xfffbe3b9,
+    0xffffbbcc,
+    0xff52de97,
+    0xfffc7978,
+    0xffd597ce,
+    0xfff2eee5,
+    0xfffff8cd
+  ];
+
   Widget _buildBackLayer() {
     return SingleChildScrollView(
+      physics: BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           //各个平台的剩余待还，以及总待还
-          Text(
-            'total',
-            style: TextStyle(color: Colors.white),
-          ),
           BlocBuilder<PfRemainBloc, List<Platform>>(
             builder: (_, s) {
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
-                shrinkWrap: true,
-                itemCount: s.length,
-                itemBuilder: (_, i) {
-                  return Container(
-                    height: 80,
-                    alignment: Alignment.center,
-                    padding: EdgeInsets.all(10),
-                    margin: EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.grey[600], borderRadius: BorderRadius.all(Radius.circular(20))),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(s[i].paidNum.toString(), style: TextStyle(color: Colors.white, fontSize: 40),),
-                        Text(s[i].platformName, style: TextStyle(color: Colors.white),),
-                      ],
-                    ),
-                  );
-                },
+              return Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: s.length > 0
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'Total',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                          Text(
+                            '${getTotalRemain(s).toString()}',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          GridView.builder(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3),
+                            shrinkWrap: true,
+                            itemCount: s.length,
+                            primary: false,
+                            itemBuilder: (_, i) {
+                              return Container(
+                                height: 80,
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(10),
+                                margin: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Color(colors[i % 10]),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(20))),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Text(
+                                      (s[i].totalNum - s[i].paidNum).toString(),
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 20),
+                                    ),
+                                    Text(
+                                      s[i].platformName,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      )
+                    : Center(
+                        child: Text('no data',
+                            style: TextStyle(color: Colors.white))),
               );
             },
           ),
-
+          
           BlocBuilder<MonthBloc, MonthArgs>(builder: (context, s) {
             return DataCurveWidget(s.dataList, s.monthList);
           }),
@@ -182,13 +226,15 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
     );
   }
 
-  Widget getCardAndList() {
-    _controller.addListener(() {
-      setState(() {
-        currentPage = _controller.page;
-      });
-    });
+  double getTotalRemain(List<Platform> pfs) {
+    double sum = 0.0;
+    for (var item in pfs) {
+      sum = sum + item.totalNum - item.paidNum;
+    }
+    return sum;
+  }
 
+  Widget getCardAndList() {
     return Center(child: BlocBuilder<SubPlatformBloc, List<SubPlatform>>(
       builder: (context, s) {
         subPlatforms = s;

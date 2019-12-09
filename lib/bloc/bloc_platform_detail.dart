@@ -6,6 +6,7 @@ import 'package:empty_wallet/tool/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../main.dart';
+import 'bloc_platform.dart';
 import 'bloc_subplatform.dart';
 
 class PlatformDetailEvent {
@@ -39,6 +40,8 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         BlocProvider.of<SubPlatformBloc>(mContext)
             .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
         BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
+        BlocProvider.of<PfRemainBloc>(mContext)
+            .add(PfRemainEvent.SHOW_PF_REMAIN);
         break;
 
       case PlatformDetailEvent.CHANGE_ITEM_STATE:
@@ -47,6 +50,8 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         BlocProvider.of<SubPlatformBloc>(mContext)
             .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
         BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
+        BlocProvider.of<PfRemainBloc>(mContext)
+            .add(PfRemainEvent.SHOW_PF_REMAIN);
         break;
     }
   }
@@ -77,7 +82,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
         numPerStage: iaas.itemNPS,
         itemName: itemTag,
         dueDate:
-            iaas.platform.dueDate)); //todo 加个itemDD，加个开关，是否是platform的duedate
+            iaas.firstDate.split('.')[2]));
 
     List<String> firstDateList = iaas.firstDate.split('.');
 
@@ -105,13 +110,21 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
       if (m == null) {
         insertDate(Month(month: s, monthTotal: iaas.itemNPS));
       } else {
-        //m != null
         m.monthTotal += iaas.itemNPS;
         await updateMonth(m);
       }
 
       //update subplatform
       var sp = await getSubPlatform(iaas.platform.platformName, s);
+      if (sp == null) {
+        sp = SubPlatform(
+            monthKey: nowTime.year.toString() + '.' + nowTime.month.toString(),
+            platformKey: iaas.platform.platformName,
+            numThisStage: 0, 
+            dateThisStage: nowTime.day.toString());
+        int i = await insertDate(sp);
+        sp.id = i;
+      }
       sp.numThisStage += iaas.itemNPS;
       updateSubPlatform(sp);
       nowTime =
@@ -145,6 +158,7 @@ class PlatformDetailBloc extends Bloc<PlatformDetailEvent, PlatformDetail> {
     for (var o in items) {
       subItems.add(await getSubItem(o.itemName, subPlatform.monthKey));
     }
+    
     //只要有一个subItem没还，则subPlatform没还清
     for (var o in subItems) {
       if (o.isPaidOff == 0) {

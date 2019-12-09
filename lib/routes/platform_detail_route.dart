@@ -37,9 +37,7 @@ class PlatformDetailRoute extends StatelessWidget {
 
 class PlatformDetailHome extends StatefulWidget {
   @override
-  _PlatformDetailHomeState createState() {
-    return _PlatformDetailHomeState();
-  }
+  _PlatformDetailHomeState createState() => _PlatformDetailHomeState();
 }
 
 class _PlatformDetailHomeState extends State<PlatformDetailHome> {
@@ -54,8 +52,11 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
 
   GlobalKey gk = GlobalKey<FormState>();
 
-  PlatformDetail _platformDetail;
   PlatformDetailBloc _pdBloc;
+
+//用来在应用退出时判断当前platform是否有数据
+  // SubPlatform sp;
+  // Platform pf;
 
   @override
   void initState() {
@@ -81,7 +82,8 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
       backgroundColor: Colors.red[200],
       body: BlocBuilder<PlatformDetailBloc, PlatformDetail>(
         builder: (context, s) {
-          _platformDetail = s;
+          sp = s.spf;
+          pf = s.pf;
           return Padding(
             padding: const EdgeInsets.all(18.0),
             child: Column(
@@ -90,7 +92,14 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
                 CusToolbar(
                     title: 'detail',
                     leftIcon: Icons.close,
-                    leftOnPress: () => Navigator.pop(pContext),
+                    leftOnPress: () {
+                      if (s.spf == null) {
+                        delPlatform(s.pf);
+                        Navigator.pop(pContext);
+                      } else {
+                        Navigator.pop(pContext);
+                      }
+                    },
                     rightIcon: Icons.add,
                     rightOnPress: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => AddItemRoute(null)))),
@@ -202,7 +211,8 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
                 color: Colors.white,
                 borderRadius: BorderRadius.all(Radius.circular(50.0))),
           ),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ItemDetailRoute(s.sis[i]))),
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => ItemDetailRoute(s.sis[i]))),
         ),
         Positioned(
           child: FloatingActionButton(
@@ -213,7 +223,7 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
                 methodId: PlatformDetailEvent.CHANGE_ITEM_STATE,
                 subItem: s.sis[i],
                 pf: pf)),
-            child: Text(s.sis[i].isPaidOff == 0 ? 'pay' : 'paid'),
+            child: Text(s.sis[i].isPaidOff == 0 ? 'pay' : 'paid'), 
           ),
           right: -0,
           top: 10,
@@ -223,60 +233,14 @@ class _PlatformDetailHomeState extends State<PlatformDetailHome> {
     );
   }
 
-  // void _showAddDialog() {
-  //   showDialog(
-  //       context: context,
-  //       builder: (context) => new SimpleDialog(children: <Widget>[
-  //             Form(
-  //                 key: gk,
-  //                 child: Column(
-  //                   children: <Widget>[
-  //                     TextFormField(
-  //                       decoration: InputDecoration(
-  //                         labelText: 'NumPerStage',
-  //                       ),
-  //                       onSaved: (s) => itemNPS = double.parse(s),
-  //                       keyboardType:
-  //                           TextInputType.numberWithOptions(decimal: true),
-  //                     ),
-  //                     TextFormField(
-  //                       decoration: InputDecoration(labelText: 'StageNum'),
-  //                       keyboardType: TextInputType.number,
-  //                       onSaved: (s) => itemSN = int.parse(s),
-  //                     ),
-  //                     Row(
-  //                       children: <Widget>[
-  //                         OutlineButton(
-  //                           onPressed: () {
-  //                             Navigator.pop(context);
-  //                           },
-  //                           child: Text('Cancel'),
-  //                         ),
-  //                         Spacer(),
-  //                         OutlineButton(
-  //                           onPressed: () {
-  //                             if ((gk.currentState as FormState).validate()) {
-  //                               (gk.currentState as FormState).save();
-  //                               _pdBloc.add(PlatformDetailEvent(
-  //                                   methodId: PlatformDetailEvent.ADD_ITEM,
-  //                                   itemAddArgs: ItemAddArgs(_platformDetail.pf,
-  //                                       _platformDetail.spf, itemSN, itemNPS， '')));
-  //                               Navigator.pop(context);
-  //                             }
-  //                           },
-  //                           child: Text('OK'),
-  //                         ),
-  //                       ],
-  //                     )
-  //                   ],
-  //                 ))
-  //           ]));
-  // }
-
   @override
   void dispose() {
-    super.dispose();
+    if (sp == null) {
+      delPlatform(pf);
+      Navigator.pop(pContext);
+    }
     pf = null;
     sp = null;
+    super.dispose();
   }
 }

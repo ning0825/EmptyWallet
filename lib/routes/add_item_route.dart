@@ -49,6 +49,9 @@ class _AddItemHomeState extends State<AddItemHome>
 
   TextEditingController textController;
 
+  DateTime startDate;
+  DateTime endDate;
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +68,9 @@ class _AddItemHomeState extends State<AddItemHome>
             .animate(pickerController);
 
     textController = TextEditingController();
+
+    startDate = DateTime(DateTime.now().year, DateTime.now().month);
+    endDate = DateTime(DateTime.now().year, DateTime.now().month + 5);
   }
 
   @override
@@ -103,6 +109,7 @@ class _AddItemHomeState extends State<AddItemHome>
                               validator: (s) => double.parse(s) < 0
                                   ? 'must not be negative'
                                   : null,
+                              keyboardType: TextInputType.number,
                             ),
                             CusTextField(
                               title: 'stage num',
@@ -110,11 +117,13 @@ class _AddItemHomeState extends State<AddItemHome>
                               validator: (s) => int.parse(s) < 0
                                   ? 'must not be negative'
                                   : null,
+                              keyboardType: TextInputType.number,
                             ),
                             GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () {
-                                FocusScope.of(context).requestFocus(FocusNode()); //隐藏软键盘
+                                FocusScope.of(context)
+                                    .requestFocus(FocusNode()); //隐藏软键盘
                                 pickerController.forward(from: 0.0);
                               },
                               child: CusTextField(
@@ -139,8 +148,8 @@ class _AddItemHomeState extends State<AddItemHome>
               child: SlideTransition(
                 position: pickerAnimation,
                 child: CusDatePicker(
-                  firstMonth: DateTime(2019, 11),
-                  lastMonth: DateTime(2020, 06),
+                  firstMonth: startDate,
+                  lastMonth: endDate, 
                   initDay: DateTime.now(),
                   onRetureDate: (d) {
                     firstDate = d.year.toString() +
@@ -179,7 +188,7 @@ class _AddItemHomeState extends State<AddItemHome>
 
   SlideTransition submitButton() {
     return SlideTransition(
-      position: Tween<Offset>(begin: Offset(1.0, 0.0), end: Offset(-0.0, 0.0))
+      position: Tween<Offset>(begin: Offset(1.0, 0.0), end: Offset(0.0, 0.0))
           .chain(CurveTween(curve: Curves.easeInOutQuart))
           .animate(controller),
       child: Container(

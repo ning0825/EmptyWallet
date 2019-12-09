@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../main.dart';
 import 'bloc_month.dart';
+import 'bloc_platform.dart';
 import 'bloc_platform_detail.dart';
 import 'bloc_subplatform.dart';
 
@@ -73,6 +74,7 @@ class ItemDetailBloc extends Bloc<ItemDetailEvent, List<SubItem>> {
     BlocProvider.of<SubPlatformBloc>(mContext)
         .add(SubPlatformEvent(eventId: SubPlatformEvent.SHOW_SUBPLATFORMS));
     BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
+    BlocProvider.of<PfRemainBloc>(mContext).add(PfRemainEvent.SHOW_PF_REMAIN);
 
     return await getSubItems(item.itemName);
   }

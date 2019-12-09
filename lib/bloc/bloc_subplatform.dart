@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../main.dart';
 import 'bloc_month.dart';
+import 'bloc_platform.dart';
 
 //A base class provided to be inherited by other event class.
 class SubPlatformEvent {
@@ -40,13 +41,14 @@ class SubPlatformBloc extends Bloc<SubPlatformEvent, List<SubPlatform>> {
           await changePayState(data);
           yield await getSubPlatforms();
           BlocProvider.of<MonthBloc>(mContext).add(MonthEvent.UPDATE_MONTH);
+          BlocProvider.of<PfRemainBloc>(mContext).add(PfRemainEvent.SHOW_PF_REMAIN);
           break;
       }
     }
   }
 
   //程序初始化，显示主界面列表
-  Future<List<SubPlatform>> getSubPlatforms() async {
+  Future<List<SubPlatform>> getSubPlatforms() async { 
     await openDB();
     var nowTime = DateTime.now();
     var monthKey = nowTime.year.toString() + '.' + nowTime.month.toString();

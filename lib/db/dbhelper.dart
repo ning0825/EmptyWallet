@@ -158,12 +158,9 @@ Future<HumanLoan> getHlByName(String name) async {
       hNotPaid: map['hNotPaid']);
 }
 
-//get platform by name.
-
-
-//*********************************************************
+//*******************************************************************************************************
 //Platform
-//********************************************************
+//*******************************************************************************************************
 Future<Platform> getPlatformByName(String name) async {
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db
@@ -196,9 +193,14 @@ Future<void> updatePlatform(Platform platform) async {
       where: 'id = ?', whereArgs: [platform.id]);
 }
 
-//*********************************************************
+Future<void> delPlatform(Platform platfrom) async{
+  final Database db = await database;
+  await db.delete(PLATFORM_TABLE_NAME, where: 'platformName = ?', whereArgs: [platfrom.platformName]);
+}
+
+//*******************************************************************************************************
 //Month
-//*********************************************************
+//*******************************************************************************************************
 Future<List<Month>> getMonths() async {
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(MONTH_TABLE_NAME);
@@ -224,9 +226,9 @@ Future<Month> getMonth(String month) async {
       id: map['id'], month: map['month'], monthTotal: map['monthTotal']);
 }
 
-//*********************************************************
+//*******************************************************************************************************
 //SubPlatform
-//*********************************************************
+//*******************************************************************************************************
 Future<List<SubPlatform>> getSubPlatformsByMonth(String monthKey) async {
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(SUBPLATFORM_TABLE_NAME,
@@ -247,18 +249,19 @@ Future<SubPlatform> getSubPlatform(String platformName, String monthKey) async {
       maps.length < 2,
       'Error: The maps length should smaller than 2, check out database. Current length: ' +
           maps.length.toString());
-  if (maps.length == 0) {
-    Platform pf = await getPlatformByName(platformName);
-    var sp = SubPlatform(
-        monthKey: monthKey,
-        platformKey: platformName,
-        numThisStage: 0,
-        dateThisStage: monthKey + '.' + pf.dueDate);
-    int i = await insertDate(sp);
-    sp.id = i;
-    return sp;
-  }
-  return SubPlatform.mapTo(maps[0]);
+  // if (maps.length == 0) {
+    // Platform pf = await getPlatformByName(platformName);
+    // var sp = SubPlatform(
+    //     monthKey: monthKey,
+    //     platformKey: platformName,
+    //     numThisStage: 0,
+    //     dateThisStage: monthKey + '.' + pf.dueDate);
+    // int i = await insertDate(sp);
+    // sp.id = i;
+    // return sp;
+  // }
+  // return SubPlatform.mapTo(maps[0]);
+      return maps.length == 0 ? null : SubPlatform.mapTo(maps[0]);
 }
 
 Future<void> updateSubPlatform(SubPlatform subPlatform) async {
@@ -267,9 +270,9 @@ Future<void> updateSubPlatform(SubPlatform subPlatform) async {
       where: 'id = ?', whereArgs: [subPlatform.id]);
 }
 
-//*********************************************************
+//*******************************************************************************************************
 //Human
-//*********************************************************
+//*******************************************************************************************************
 Future<void> updateHuman(HumanLoan humanLoan) async {
   final Database db = await database;
   await db.update(HUMANLOAN_TABLE_NAME, humanLoan.toMap(),
@@ -282,7 +285,9 @@ Future<void> updateMonth(Month month) async {
       where: 'id = ?', whereArgs: [month.id]);
 }
 
-//get items in platform.
+//*******************************************************************************************************
+//Item
+//*******************************************************************************************************
 Future<List<Item>> getItems(String platformKey) async {
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(ITEM_TABLE_NAME,
@@ -308,12 +313,13 @@ Future<Item> getItemByName(String name) async {
   return Item.mapTo(maps[0]);
 }
 
+//*******************************************************************************************************
+//SubItem
+//*******************************************************************************************************
 Future<SubItem> getSubItem(String itemKey, String monthKey) async {
   final Database db = await database;
   List<Map<String, dynamic>> maps = await db.query(SUBITEM_TABLE_NAME,
       where: 'itemKey = ? and monthKey = ?', whereArgs: [itemKey, monthKey]);
-      //TODO: 下面判空结果为非空，为何到maps[0]时maps又是空了
-  // return maps == null ? null : SubItem.mapTo(maps[0]);
   if (maps.length > 0) {
     return SubItem.mapTo(maps[0]);
   } else {
