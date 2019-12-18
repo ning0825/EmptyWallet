@@ -356,7 +356,6 @@ class NewHomeState extends State<NewHome> with TickerProviderStateMixin {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          print(index.toString() + '88888888888888888888888888888');
           Navigator.push(
               context,
               MaterialPageRoute(
